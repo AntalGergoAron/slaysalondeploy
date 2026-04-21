@@ -3,29 +3,64 @@
 ## Komponens alapú felépítés
 
 A SlaySalon alkalmazás React alapú komponensarchitektúrát használ.  
-A felület kisebb, újrahasznosítható komponensekre van bontva, amelyek együtt építik fel az egyes oldalakat.
+A felület logikailag elkülönített layout, context, oldal (page) és service rétegekre épül.
+
+A komponensszerkezet célja:
+- az oldalak közötti közös elemek újrahasznosítása
+- az egyes funkciók elkülönítése
+- az egyszerűbb karbantartás és továbbfejleszthetőség
 
 ---
 
 ## Fő layout komponensek
 
+### Layout
+A teljes alkalmazás közös keretkomponense.
+
+Funkciók:
+- közös oldalszerkezet biztosítása
+- `Navbar` megjelenítése
+- az aktuális oldal betöltése `Outlet` segítségével
+- fő tartalmi terület és footer megjelenítése
+
+---
+
 ### Navbar
 A felső navigációs sáv, amely minden oldalon megjelenik.
 
 Funkciók:
-- Navigáció a fő oldalak között (Kezdőlap, Szolgáltatások, Foglalás, Kapcsolat)
-- Logó megjelenítése
-- Reszponzív menü mobil nézetben
+- navigáció a fő oldalak között
+- aktív útvonal vizuális kiemelése
+- linkek a publikus és belső oldalakra
+- reszponzív, mobile-first működés
+
+Navigációs elemek:
+- Kezdőlap
+- Szolgáltatások
+- Foglalás
+- Kapcsolat
+- Fiók
 
 ---
 
-### Footer
-Az oldal alján megjelenő komponens.
+## Állapotkezelő komponens
+
+### AuthProvider / AuthContext
+A teljes alkalmazás hitelesítési és felhasználói állapotát kezeli.
 
 Funkciók:
-- Elérhetőségi adatok
-- Közösségi média linkek
-- Copyright információk
+- Supabase auth session figyelése
+- aktuális auth user tárolása
+- a `public.users` táblából a hozzá tartozó user rekord betöltése
+- bejelentkezés
+- regisztráció
+- kijelentkezés
+- szerepkör alapú működés támogatása
+
+Kezelt szerepkörök:
+- visitor
+- client
+- admin
 
 ---
 
@@ -35,93 +70,126 @@ Funkciók:
 A kezdőoldal komponense.
 
 Tartalom:
-- Rövid bemutatkozás
-- Kiemelt szolgáltatások
-- Call-to-action (pl. "Foglalj időpontot")
+- rövid bemutatkozás
+- szolgáltatásajánló tartalom
+- call-to-action elemek
+- navigáció a fontos oldalakra
 
 ---
 
 ### ServicesPage
 A szolgáltatások listáját megjelenítő oldal.
 
-Tartalom:
-- Szolgáltatások listája
-- Szolgáltatás kártyák (ServiceCard komponens)
+Funkciók:
+- szolgáltatások lekérése a backendből
+- szolgáltatások listázása
+- név szerinti keresés
+- kategória szerinti szűrés
+- többféle rendezés
+- admin esetén szolgáltatás létrehozása
+- admin esetén szolgáltatás szerkesztése
+- admin esetén szolgáltatás törlése
 
 ---
 
 ### BookingPage
 Az időpontfoglalás oldala.
 
-Tartalom:
-- Szolgáltatás kiválasztása
-- Időpont kiválasztása
-- Foglalási űrlap
+Funkciók:
+- szolgáltatások lekérése
+- elérhető időpontok lekérése
+- új foglalás létrehozása
+- saját foglalások listázása
+- meglévő foglalás szerkesztése
+- meglévő foglalás törlése
+- admin esetén az összes foglalás megjelenítése
+
+Megjegyzés:
+- visitor felhasználó csak tájékoztató szöveget lát
+- client csak saját foglalásait látja és kezeli
+- admin az összes foglalást látja
 
 ---
 
 ### ContactPage
 Kapcsolati oldal.
 
-Tartalom:
-- Kapcsolati űrlap
-- Elérhetőségek megjelenítése
+Funkciók:
+- statikus elérhetőségek megjelenítése
+- kapcsolatfelvételi űrlap
+- validáció
+- üzenet mentése a `contact_messages` táblába
+- admin esetén a beérkezett üzenetek listázása
 
 ---
 
-## Újrahasznosítható komponensek
-
-### ServiceCard
-Egy adott szolgáltatás megjelenítésére szolgáló kártya.
-
-Tulajdonságok (props):
-- name
-- description
-- price
-- duration
-
----
-
-### BookingForm
-A foglalási folyamatot kezelő űrlap.
+### AuthPage
+A fiók kezelésére szolgáló oldal.
 
 Funkciók:
-- Adatbekérés (név, e-mail stb.)
-- Szolgáltatás kiválasztása
-- Időpont kiválasztása
-- Validáció
+- regisztráció
+- bejelentkezés
+- kijelentkezés
+- aktuális felhasználói adatok megjelenítése
+- szerepkör megjelenítése
 
 ---
 
-### ContactForm
-Kapcsolati űrlap komponens.
+### NotFoundPage
+404-es oldal.
 
+Funkció:
+- nem létező útvonal esetén felhasználóbarát visszajelzés megjelenítése
+
+---
+
+## Service réteg
+
+A backend kommunikáció külön service fájlokban van elkülönítve.
+
+### appointmentService
 Funkciók:
-- Név, e-mail, üzenet mezők
-- Validáció
-- Üzenet küldése
+- foglalások lekérése
+- foglalás létrehozása
+- foglalás szerkesztése
+- foglalás törlése
 
 ---
 
-### Button
-Általános újrahasznosítható gomb komponens.
+### serviceService
+Funkciók:
+- szolgáltatások lekérése
+- szolgáltatás létrehozása
+- szolgáltatás szerkesztése
+- szolgáltatás törlése
 
-Tulajdonságok:
-- label
-- onClick
-- type
+---
+
+### timeSlotService
+Funkciók:
+- időpontok lekérése
+- időpont foglalttá tétele
+- időpont ismét elérhetővé tétele
+
+---
+
+### contactMessageService
+Funkciók:
+- kapcsolatfelvételi üzenetek lekérése
+- új üzenet mentése
 
 ---
 
 ## Komponens kapcsolatok
 
-- A Navbar és Footer minden oldalon megjelenik
-- A ServicesPage több ServiceCard komponenst használ
-- A BookingPage a BookingForm komponenst tartalmazza
-- A ContactPage a ContactForm komponenst használja
+- A `Layout` minden oldal közös kerete
+- A `Layout` tartalmazza a `Navbar` komponenst
+- Az `AuthProvider` körbefogja a teljes alkalmazást
+- A `ServicesPage`, `BookingPage`, `ContactPage` és `AuthPage` a contextből és service-ekből dolgoznak
+- A React Router biztosítja az oldalak közötti navigációt
 
 ---
 
 ## Összegzés
 
-Az alkalmazás komponens alapú felépítése lehetővé teszi a kód újrahasznosítását, az egyszerű karbantartást és a skálázhatóságot.
+Az alkalmazás komponens alapú felépítése biztosítja a logikai elkülönítést, a kód újrahasznosíthatóságát és a könnyebb fejleszthetőséget. Az oldalak külön felelősségi körök szerint működnek, míg a backend kommunikáció külön service rétegben van kezelve.

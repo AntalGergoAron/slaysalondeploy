@@ -34,6 +34,13 @@ export default function Navbar() {
                 >
                     Kapcsolat
                 </NavLink>
+
+                <NavLink
+                    to="/fiok"
+                    className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+                >
+                    Fiók
+                </NavLink>
             </div>
         </nav>
     );

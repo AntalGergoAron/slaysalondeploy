@@ -41,6 +41,42 @@ Nagyrészt elfogadtam, mert jól támogatta az 1. mérföldkő elvárásait. A s
 
 ---
 
+## 4. prompt
+**Kérés:**  
+Segíts kapcsolatfelvételi oldalt készíteni Supabase mentéssel, inline validációval és admin nézettel a beérkezett üzenetek listázására.
+
+**AI válasz:**  
+Külön `contactMessageService` fájlt, validált kontakt űrlapot és admin lista nézetet javasolt.
+
+**Értékelés:**  
+Elfogadtam, de a megoldást módosítanom kellett, mert az adatbázis tényleges mezői (`phone`, `subject`) eltértek az első változattól. A hibákat a Supabase hibaüzenetei alapján javítottam.
+
+---
+
+## 5. prompt
+**Kérés:**  
+Segíts szerepkör alapú megjelenítést kialakítani React + Supabase környezetben úgy, hogy legyen visitor, client és admin nézet.
+
+**AI válasz:**  
+AuthContext alapú megoldást javasolt `authUser` és `dbUser` állapotokkal, valamint feltételes rendereléssel az oldalakban.
+
+**Értékelés:**  
+Jól jött a segítség, A jogosultsági logikát a saját users táblám role mezőjére építettem.
+
+---
+
+## 6. prompt
+**Kérés:**  
+Segíts React oldalakra szétbontani a korábbi nagy App.jsx logikát úgy, hogy a foglalások a BookingPage-re, a szolgáltatások a ServicesPage-re, az auth pedig külön AuthPage-re kerüljön.
+
+**AI válasz:**  
+Page-alapú szerkezetet, route bekötést és külön komponenslogikát javasolt.
+
+**Értékelés:**  
+Segített, mert javította a projekt átláthatóságát. Az importútvonalakat és a tényleges mappastruktúrát manuálisan ellenőriztem és javítottam.
+
+---
+
 
 ## Problémák az AI-val
 
@@ -49,3 +85,4 @@ Egy ponton az AI által javasolt fájlstruktúra és importútvonalak nem egyezt
 ## Összegzés
 
 Az AI használata jelentősen gyorsította a tervezést és a fejlesztést, de minden javaslatot ellenőriztem és a saját projektemhez igazítottam.
+

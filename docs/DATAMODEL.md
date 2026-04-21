@@ -2,9 +2,14 @@
 
 ## Adatmodell áttekintés
 
-Az alkalmazás célja, hogy kezelje a műkörmös szalon szolgáltatásait, az elérhető időpontokat és a vendégek foglalásait.
+A SlaySalon alkalmazás célja, hogy kezelje:
+- a felhasználókat
+- a szolgáltatásokat
+- az elérhető időpontokat
+- a foglalásokat
+- a kapcsolat oldalon küldött üzeneteket
 
-Az adatmodell az alábbi fő entitásokból áll:
+Az adatmodell 5 fő entitásból áll:
 
 - User
 - Service
@@ -14,140 +19,135 @@ Az adatmodell az alábbi fő entitásokból áll:
 
 ---
 
-## User
+## 1. User
 
 A rendszer felhasználóit reprezentálja.
 
-Attribútumok:
+### Attribútumok
+- `id` (number) – egyedi azonosító a `public.users` táblában
+- `auth_user_id` (uuid) – hivatkozás a Supabase auth felhasználóra
+- `full_name` (string) – teljes név
+- `email` (string) – e-mail cím
+- `phone` (string) – telefonszám
+- `role` (string) – felhasználói szerepkör (`client` vagy `admin`)
+- `created_at` (datetime) – létrehozás ideje
 
-id (number) – egyedi azonosító
+### Megjegyzés
+A frontend nézetben megjelenik egy harmadik logikai állapot is:
+- `visitor` – nem bejelentkezett felhasználó
 
-fullName (string) – teljes név
-
-email (string) – e-mail cím
-
-phone (string) – telefonszám
-
-role (string) – felhasználói szerepkör (guest vagy admin)
-
-createdAt (datetime) – létrehozás ideje
+Ez nem külön adatbázis rekord, hanem a be nem jelentkezett állapot frontend oldali reprezentációja.
 
 ---
 
-## Service
+## 2. Service
 
 A szalon által kínált szolgáltatásokat tárolja.
 
-Attribútumok:
-
-id (number)
-
-name (string)
-
-description (string)
-
-price (number)
-
-durationMinutes (number)
-
-category (string)
-
-isActive (boolean)
-
-createdAt (datetime)
+### Attribútumok
+- `id` (number)
+- `name` (string)
+- `description` (string)
+- `duration_minutes` (number)
+- `price` (number)
+- `category` (string)
+- `is_active` (boolean)
+- `created_at` (datetime)
+- `updated_at` (datetime)
 
 ---
 
-## TimeSlot
+## 3. TimeSlot
 
 Az elérhető foglalható időpontokat tárolja.
 
-Attribútumok:
-
-id (number)
-
-date (date)
-
-startTime (string)
-
-endTime (string)
-
-isAvailable (boolean)
-
-createdAt (datetime)
+### Attribútumok
+- `id` (number)
+- `slot_date` (date)
+- `start_time` (string)
+- `end_time` (string)
+- `is_available` (boolean)
+- `created_at` (datetime)
 
 ---
 
-## Appointment
+## 4. Appointment
 
 A vendégek által leadott foglalásokat tárolja.
 
-Attribútumok:
-
-id (number)
-
-userId (number)
-
-serviceId (number)
-
-timeSlotId (number)
-
-status (string) – pending / confirmed / cancelled
-
-notes (string)
-
-createdAt (datetime)
+### Attribútumok
+- `id` (number)
+- `user_id` (number) – hivatkozás a foglalást létrehozó felhasználóra
+- `service_id` (number) – hivatkozás a kiválasztott szolgáltatásra
+- `time_slot_id` (number) – hivatkozás a kiválasztott időpontra
+- `customer_name` (string)
+- `customer_email` (string)
+- `customer_phone` (string)
+- `notes` (string)
+- `status` (string) – pl. `pending`, `confirmed`, `cancelled`
+- `created_at` (datetime)
 
 ---
 
-## ContactMessage
+## 5. ContactMessage
 
-A kapcsolat oldalon keresztül küldött üzenetek.
+A kapcsolat oldalon keresztül küldött üzeneteket tárolja.
 
-Attribútumok:
-
-id (number)
-
-name (string)
-
-email (string)
-
-subject (string)
-
-message (string)
-
-createdAt (datetime)
+### Attribútumok
+- `id` (number)
+- `name` (string)
+- `email` (string)
+- `phone` (string)
+- `subject` (string)
+- `message` (string)
+- `created_at` (datetime)
 
 ---
 
 ## Entitások közötti kapcsolatok
 
-User – Appointment
+### User – Appointment
+Kapcsolat típusa: **1:N**
 
-1:N kapcsolat
-
-Egy felhasználóhoz több foglalás tartozhat.
-
----
-
-Service – Appointment
-
-1:N kapcsolat
-
-Egy szolgáltatás több foglaláshoz is kapcsolódhat.
+Magyarázat:
+- egy felhasználó több foglalással is rendelkezhet
+- minden foglalás pontosan egy felhasználóhoz tartozik
 
 ---
 
-TimeSlot – Appointment
+### Service – Appointment
+Kapcsolat típusa: **1:N**
 
-1:1 kapcsolat
-
-Egy időpont egyszerre csak egy foglaláshoz tartozhat.
+Magyarázat:
+- egy szolgáltatás több foglalásban is szerepelhet
+- minden foglalás pontosan egy szolgáltatáshoz tartozik
 
 ---
 
-User (admin) – TimeSlot
+### TimeSlot – Appointment
+Kapcsolat típusa: **1:1 logikai kapcsolat**
 
-1:N kapcsolat
+Magyarázat:
+- egy időpont egyszerre csak egy foglaláshoz tartozhat
+- ezt az alkalmazás az elérhetőség kezelésével biztosítja
+- foglaláskor az időpont nem lesz többé választható
 
-Egy admin több időpontot hozhat létre.
+---
+
+### Auth user – User
+Kapcsolat típusa: **1:1**
+
+Magyarázat:
+- minden Supabase auth userhez tartozik egy rekord a `public.users` táblában
+- ezt trigger alapú szinkronizáció biztosítja
+
+---
+
+## Összegzés
+
+Az adatmodell a foglalási rendszer működéséhez szükséges fő üzleti entitásokat tartalmazza.  
+A kapcsolatok lehetővé teszik:
+- a felhasználók és foglalások összekapcsolását
+- a szolgáltatások és időpontok hozzárendelését a foglalásokhoz
+- a kapcsolat oldalon küldött üzenetek tárolását
+- a szerepkör alapú működés támogatását

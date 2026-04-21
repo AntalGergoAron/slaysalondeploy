@@ -1,126 +1,628 @@
-import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import {
+    getAllAppointments,
+    createAppointment,
+    updateAppointment,
+    deleteAppointment,
+} from '../services/appointmentService'
+import { getAllServices } from '../services/serviceService'
+import {
+    getAllTimeSlots,
+    markTimeSlotUnavailable,
+    markTimeSlotAvailable,
+} from '../services/timeSlotService'
 
 export default function BookingPage() {
-    const location = useLocation();
+    const { authUser, dbUser } = useAuth()
 
-    const [name, setName] = useState("");
-    const [service, setService] = useState(
-        location.state?.selectedService || ""
-    );
-    const [date, setDate] = useState("");
-    const [bookings, setBookings] = useState([]);
+    const [appointments, setAppointments] = useState([])
+    const [services, setServices] = useState([])
+    const [timeSlots, setTimeSlots] = useState([])
 
-    useEffect(() => {
-        const savedBookings = JSON.parse(localStorage.getItem("bookings")) || [];
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setBookings(savedBookings);
-    }, []);
+    const [loading, setLoading] = useState(true)
+    const [appointmentSubmitting, setAppointmentSubmitting] = useState(false)
 
-    function handleSubmit(e) {
-        e.preventDefault();
+    const [appointmentError, setAppointmentError] = useState('')
+    const [appointmentSuccess, setAppointmentSuccess] = useState('')
 
-        if (!name || !service || !date) {
-            alert("Kérlek tölts ki minden mezőt!");
-            return;
-        }
+    const [editingAppointment, setEditingAppointment] = useState(null)
 
-        const newBooking = {
-            id: Date.now(),
-            name,
-            service,
-            date,
-        };
+    const [fieldErrors, setFieldErrors] = useState({
+        service_id: '',
+        time_slot_id: '',
+        customer_name: '',
+        customer_email: '',
+        customer_phone: '',
+    })
 
-        const updatedBookings = [...bookings, newBooking];
-        setBookings(updatedBookings);
-        localStorage.setItem("bookings", JSON.stringify(updatedBookings));
+    const [appointmentFormData, setAppointmentFormData] = useState({
+        service_id: '',
+        time_slot_id: '',
+        customer_name: '',
+        customer_email: '',
+        customer_phone: '',
+        notes: '',
+        status: 'pending',
+    })
 
-        alert("Foglalás sikeresen mentve!");
+    const isLoggedIn = !!authUser
+    const isAdmin = dbUser?.role === 'admin'
+    const isClient = isLoggedIn && !isAdmin
 
-        setName("");
-        setService("");
-        setDate("");
+    const resetFieldErrors = () => {
+        setFieldErrors({
+            service_id: '',
+            time_slot_id: '',
+            customer_name: '',
+            customer_email: '',
+            customer_phone: '',
+        })
     }
 
-    function handleDelete(id) {
-        const updatedBookings = bookings.filter((booking) => booking.id !== id);
-        setBookings(updatedBookings);
-        localStorage.setItem("bookings", JSON.stringify(updatedBookings));
+    const resetAppointmentForm = () => {
+        setAppointmentFormData({
+            service_id: '',
+            time_slot_id: '',
+            customer_name: dbUser?.full_name || '',
+            customer_email: dbUser?.email || '',
+            customer_phone: dbUser?.phone || '',
+            notes: '',
+            status: 'pending',
+        })
+        resetFieldErrors()
+        setEditingAppointment(null)
+    }
+
+    const loadBookingData = async () => {
+        try {
+            setLoading(true)
+            setAppointmentError('')
+
+            const [servicesData, timeSlotsData, appointmentsData] = await Promise.all([
+                getAllServices(),
+                getAllTimeSlots(),
+                dbUser ? getAllAppointments() : Promise.resolve([]),
+            ])
+
+            setServices(servicesData)
+            setTimeSlots(timeSlotsData)
+            setAppointments(appointmentsData)
+        } catch (err) {
+            setAppointmentError(err.message)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        loadBookingData()
+    }, [dbUser])
+
+    useEffect(() => {
+        if (!editingAppointment) {
+            setAppointmentFormData((prev) => ({
+                ...prev,
+                customer_name: dbUser?.full_name || '',
+                customer_email: dbUser?.email || '',
+                customer_phone: dbUser?.phone || '',
+            }))
+        }
+    }, [dbUser, editingAppointment])
+
+    const handleAppointmentChange = (event) => {
+        const { name, value } = event.target
+
+        setAppointmentFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }))
+
+        if (fieldErrors[name]) {
+            setFieldErrors((prev) => ({
+                ...prev,
+                [name]: '',
+            }))
+        }
+    }
+
+    const validateAppointmentForm = () => {
+        const errors = {
+            service_id: '',
+            time_slot_id: '',
+            customer_name: '',
+            customer_email: '',
+            customer_phone: '',
+        }
+
+        const trimmedName = appointmentFormData.customer_name.trim()
+        const trimmedEmail = appointmentFormData.customer_email.trim()
+        const trimmedPhone = appointmentFormData.customer_phone.trim()
+
+        if (!appointmentFormData.service_id) {
+            errors.service_id = 'Válassz szolgáltatást.'
+        }
+
+        if (!appointmentFormData.time_slot_id) {
+            errors.time_slot_id = 'Válassz időpontot.'
+        }
+
+        if (!trimmedName) {
+            errors.customer_name = 'A név megadása kötelező.'
+        }
+
+        if (!trimmedEmail) {
+            errors.customer_email = 'Az email cím megadása kötelező.'
+        } else {
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            if (!emailPattern.test(trimmedEmail)) {
+                errors.customer_email = 'Adj meg egy érvényes email címet.'
+            }
+        }
+
+        if (!trimmedPhone) {
+            errors.customer_phone = 'A telefonszám megadása kötelező.'
+        } else if (trimmedPhone.length < 6) {
+            errors.customer_phone = 'Adj meg egy érvényesebb telefonszámot.'
+        }
+
+        setFieldErrors(errors)
+
+        return (
+            !errors.service_id &&
+            !errors.time_slot_id &&
+            !errors.customer_name &&
+            !errors.customer_email &&
+            !errors.customer_phone
+        )
+    }
+
+    const handleEditAppointment = (appointment) => {
+        if (!isAdmin && appointment.user_id !== dbUser?.id) {
+            setAppointmentError('Csak a saját foglalásodat szerkesztheted.')
+            return
+        }
+
+        setAppointmentError('')
+        setAppointmentSuccess('')
+        resetFieldErrors()
+        setEditingAppointment(appointment)
+
+        setAppointmentFormData({
+            service_id: String(appointment.service_id),
+            time_slot_id: String(appointment.time_slot_id),
+            customer_name: appointment.customer_name || '',
+            customer_email: appointment.customer_email || '',
+            customer_phone: appointment.customer_phone || '',
+            notes: appointment.notes || '',
+            status: appointment.status || 'pending',
+        })
+    }
+
+    const handleCancelEdit = () => {
+        setAppointmentError('')
+        setAppointmentSuccess('')
+        resetAppointmentForm()
+    }
+
+    const handleAppointmentSubmit = async (event) => {
+        event.preventDefault()
+
+        if (!dbUser) {
+            setAppointmentError('Foglaláshoz be kell jelentkezned.')
+            return
+        }
+
+        setAppointmentError('')
+        setAppointmentSuccess('')
+
+        if (!validateAppointmentForm()) {
+            setAppointmentError('Kérlek javítsd a hibás mezőket.')
+            return
+        }
+
+        try {
+            setAppointmentSubmitting(true)
+
+            const payload = {
+                user_id: Number(dbUser.id),
+                service_id: Number(appointmentFormData.service_id),
+                time_slot_id: Number(appointmentFormData.time_slot_id),
+                customer_name: appointmentFormData.customer_name.trim(),
+                customer_email: appointmentFormData.customer_email.trim(),
+                customer_phone: appointmentFormData.customer_phone.trim(),
+                notes: appointmentFormData.notes.trim(),
+                status: appointmentFormData.status,
+            }
+
+            if (editingAppointment) {
+                if (!isAdmin && editingAppointment.user_id !== dbUser.id) {
+                    setAppointmentError('Csak a saját foglalásodat módosíthatod.')
+                    return
+                }
+
+                const oldTimeSlotId = Number(editingAppointment.time_slot_id)
+                const newTimeSlotId = Number(appointmentFormData.time_slot_id)
+
+                await updateAppointment(editingAppointment.id, payload)
+
+                if (oldTimeSlotId !== newTimeSlotId) {
+                    await markTimeSlotAvailable(oldTimeSlotId)
+                    await markTimeSlotUnavailable(newTimeSlotId)
+                }
+
+                setAppointmentSuccess('A foglalás sikeresen módosítva lett.')
+            } else {
+                await createAppointment(payload)
+                await markTimeSlotUnavailable(Number(appointmentFormData.time_slot_id))
+                setAppointmentSuccess('A foglalás sikeresen létrejött.')
+            }
+
+            resetAppointmentForm()
+            await loadBookingData()
+        } catch (err) {
+            if (
+                err.message.includes('appointments_time_slot_id_key') ||
+                err.message.includes('duplicate key value')
+            ) {
+                setAppointmentError('Ez az időpont már foglalt, kérlek válassz másikat.')
+            } else {
+                setAppointmentError(err.message)
+            }
+        } finally {
+            setAppointmentSubmitting(false)
+        }
+    }
+
+    const handleDeleteAppointment = async (appointment) => {
+        if (!isAdmin && appointment.user_id !== dbUser?.id) {
+            setAppointmentError('Csak a saját foglalásodat törölheted.')
+            return
+        }
+
+        const confirmed = window.confirm(
+            `${appointment.customer_name} foglalását biztosan törölni szeretnéd?`
+        )
+
+        if (!confirmed) {
+            return
+        }
+
+        try {
+            setAppointmentError('')
+            setAppointmentSuccess('')
+
+            await deleteAppointment(appointment.id)
+            await markTimeSlotAvailable(appointment.time_slot_id)
+
+            if (editingAppointment && editingAppointment.id === appointment.id) {
+                resetAppointmentForm()
+            }
+
+            setAppointmentSuccess('A foglalás sikeresen törölve lett.')
+            await loadBookingData()
+        } catch (err) {
+            setAppointmentError(err.message)
+        }
+    }
+
+    const visibleAppointments = useMemo(() => {
+        if (!dbUser) {
+            return []
+        }
+
+        if (isAdmin) {
+            return appointments
+        }
+
+        return appointments.filter((appointment) => appointment.user_id === dbUser.id)
+    }, [appointments, dbUser, isAdmin])
+
+    const selectableTimeSlots = useMemo(() => {
+        return timeSlots.filter(
+            (slot) =>
+                slot.is_available || slot.id === Number(appointmentFormData.time_slot_id)
+        )
+    }, [timeSlots, appointmentFormData.time_slot_id])
+
+    const bookableServices = useMemo(() => {
+        return services.filter((service) => service.is_active)
+    }, [services])
+
+    if (loading) {
+        return <p>Betöltés...</p>
     }
 
     return (
-        <section>
-            <h1>Időpontfoglalás</h1>
+        <section className="page-shell">
+            <div className="page-header">
+                <h1>Foglalások</h1>
+                <p className="page-intro">
+                    Válassz szolgáltatást és szabad időpontot, majd kezeld a meglévő
+                    foglalásaidat egy helyen.
+                </p>
 
-            <form className="booking-form" onSubmit={handleSubmit}>
-                <label>
-                    Név
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Add meg a neved"
-                    />
-                </label>
+                {!isLoggedIn && <span className="role-badge">Visitor nézet</span>}
+                {isClient && <span className="role-badge">Saját foglalások</span>}
+                {isAdmin && <span className="role-badge">Admin mód</span>}
+            </div>
 
-                <label>
-                    Szolgáltatás
-                    <select
-                        value={service}
-                        onChange={(e) => setService(e.target.value)}
-                    >
-                        <option value="">Válassz szolgáltatást</option>
-                        <option>Gél lakkozás</option>
-                        <option>Műköröm építés</option>
-                        <option>Műköröm töltés</option>
-                        <option>Díszítés</option>
-                    </select>
-                </label>
+            {appointmentError && (
+                <div className="alert alert--error">{appointmentError}</div>
+            )}
 
-                <label>
-                    Dátum
-                    <input
-                        type="date"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                    />
-                </label>
+            {appointmentSuccess && (
+                <div className="alert alert--success">{appointmentSuccess}</div>
+            )}
 
-                <button type="submit" className="button button--primary">
-                    Foglalás mentése
-                </button>
-            </form>
+            {!isLoggedIn ? (
+                <>
+                    <div className="panel">
+                        <h2>Bejelentkezés szükséges</h2>
+                        <p>
+                            Új foglalás létrehozásához jelentkezz be vagy regisztrálj a
+                            Fiók oldalon.
+                        </p>
 
-            <section className="booking-list-section">
-                <h2>Mentett foglalások</h2>
-
-                {bookings.length === 0 ? (
-                    <p>Még nincs mentett foglalás.</p>
-                ) : (
-                    <div className="booking-list">
-                        {bookings.map((booking) => (
-                            <article key={booking.id} className="booking-card">
-                                <h3>{booking.name}</h3>
-                                <p>
-                                    <strong>Szolgáltatás:</strong> {booking.service}
-                                </p>
-                                <p>
-                                    <strong>Dátum:</strong> {booking.date}
-                                </p>
-
-                                <button
-                                    type="button"
-                                    className="button button--secondary"
-                                    onClick={() => handleDelete(booking.id)}
-                                >
-                                    Törlés
-                                </button>
-                            </article>
-                        ))}
+                        <div className="form-actions">
+                            <Link to="/fiok" className="button button--primary">
+                                Tovább a Fiók oldalra
+                            </Link>
+                            <Link to="/szolgaltatasok" className="button button--secondary">
+                                Szolgáltatások megtekintése
+                            </Link>
+                        </div>
                     </div>
-                )}
-            </section>
+
+                    <div className="panel booking-list-section">
+                        <h2>Hogyan működik a foglalás?</h2>
+                        <p>
+                            Először válassz egy szolgáltatást, majd jelentkezz be, és foglalj
+                            egy szabad időpontot.
+                        </p>
+                    </div>
+                </>
+            ) : (
+                <>
+                    <div className="panel">
+                        <h2>
+                            {editingAppointment
+                                ? 'Foglalás szerkesztése'
+                                : 'Új foglalás létrehozása'}
+                        </h2>
+
+                        <form className="app-form" onSubmit={handleAppointmentSubmit}>
+                            <div className="form-grid">
+                                <div className="form-field">
+                                    <label htmlFor="customer_name">Név</label>
+                                    <input
+                                        id="customer_name"
+                                        name="customer_name"
+                                        type="text"
+                                        value={appointmentFormData.customer_name}
+                                        onChange={handleAppointmentChange}
+                                    />
+                                    {fieldErrors.customer_name && (
+                                        <p className="field-error">
+                                            {fieldErrors.customer_name}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="form-field">
+                                    <label htmlFor="customer_email">Email</label>
+                                    <input
+                                        id="customer_email"
+                                        name="customer_email"
+                                        type="email"
+                                        value={appointmentFormData.customer_email}
+                                        onChange={handleAppointmentChange}
+                                    />
+                                    {fieldErrors.customer_email && (
+                                        <p className="field-error">
+                                            {fieldErrors.customer_email}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="form-field">
+                                    <label htmlFor="customer_phone">Telefonszám</label>
+                                    <input
+                                        id="customer_phone"
+                                        name="customer_phone"
+                                        type="text"
+                                        value={appointmentFormData.customer_phone}
+                                        onChange={handleAppointmentChange}
+                                    />
+                                    {fieldErrors.customer_phone && (
+                                        <p className="field-error">
+                                            {fieldErrors.customer_phone}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="form-field">
+                                    <label htmlFor="service_id">Szolgáltatás</label>
+                                    <select
+                                        id="service_id"
+                                        name="service_id"
+                                        value={appointmentFormData.service_id}
+                                        onChange={handleAppointmentChange}
+                                    >
+                                        <option value="">Válassz szolgáltatást</option>
+                                        {bookableServices.map((service) => (
+                                            <option key={service.id} value={service.id}>
+                                                {service.name} - {service.duration_minutes} perc -{' '}
+                                                {service.price} Ft
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {fieldErrors.service_id && (
+                                        <p className="field-error">
+                                            {fieldErrors.service_id}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="form-field">
+                                    <label htmlFor="time_slot_id">Időpont</label>
+                                    <select
+                                        id="time_slot_id"
+                                        name="time_slot_id"
+                                        value={appointmentFormData.time_slot_id}
+                                        onChange={handleAppointmentChange}
+                                    >
+                                        <option value="">Válassz időpontot</option>
+                                        {selectableTimeSlots.map((slot) => (
+                                            <option key={slot.id} value={slot.id}>
+                                                {slot.slot_date} - {slot.start_time} - {slot.end_time}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {fieldErrors.time_slot_id && (
+                                        <p className="field-error">
+                                            {fieldErrors.time_slot_id}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {isAdmin && (
+                                    <div className="form-field">
+                                        <label htmlFor="status">Státusz</label>
+                                        <select
+                                            id="status"
+                                            name="status"
+                                            value={appointmentFormData.status}
+                                            onChange={handleAppointmentChange}
+                                        >
+                                            <option value="pending">Függőben</option>
+                                            <option value="confirmed">Megerősítve</option>
+                                            <option value="cancelled">Törölve</option>
+                                        </select>
+                                    </div>
+                                )}
+
+                                <div className="form-field form-field--full">
+                                    <label htmlFor="notes">Megjegyzés</label>
+                                    <textarea
+                                        id="notes"
+                                        name="notes"
+                                        rows="4"
+                                        value={appointmentFormData.notes}
+                                        onChange={handleAppointmentChange}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-actions">
+                                <button
+                                    className="button button--primary"
+                                    type="submit"
+                                    disabled={appointmentSubmitting}
+                                >
+                                    {appointmentSubmitting
+                                        ? 'Mentés...'
+                                        : editingAppointment
+                                          ? 'Foglalás mentése'
+                                          : 'Foglalás létrehozása'}
+                                </button>
+
+                                {editingAppointment && (
+                                    <button
+                                        className="button button--secondary"
+                                        type="button"
+                                        onClick={handleCancelEdit}
+                                    >
+                                        Mégse
+                                    </button>
+                                )}
+                            </div>
+                        </form>
+                    </div>
+
+                    <div className="panel booking-list-section">
+                        <h2>
+                            {isAdmin ? 'Összes foglalás' : 'Saját foglalásaim'}
+                        </h2>
+
+                        {visibleAppointments.length === 0 ? (
+                            <div className="empty-state">
+                                {isAdmin
+                                    ? 'Jelenleg nincs egyetlen foglalás sem.'
+                                    : 'Még nincs foglalásod.'}
+                            </div>
+                        ) : (
+                            <div className="booking-list">
+                                {visibleAppointments.map((appointment) => (
+                                    <article className="booking-card" key={appointment.id}>
+                                        <h3>
+                                            {appointment.services?.name || 'Ismeretlen szolgáltatás'}
+                                        </h3>
+
+                                        <p>
+                                            <strong>Név:</strong> {appointment.customer_name}
+                                        </p>
+                                        <p>
+                                            <strong>Email:</strong> {appointment.customer_email}
+                                        </p>
+                                        <p>
+                                            <strong>Telefon:</strong> {appointment.customer_phone}
+                                        </p>
+                                        <p>
+                                            <strong>Dátum:</strong>{' '}
+                                            {appointment.time_slots?.slot_date || '-'}
+                                        </p>
+                                        <p>
+                                            <strong>Idő:</strong>{' '}
+                                            {appointment.time_slots?.start_time || '-'} -{' '}
+                                            {appointment.time_slots?.end_time || '-'}
+                                        </p>
+                                        <p>
+                                            <strong>Státusz:</strong> {appointment.status}
+                                        </p>
+                                        <p>
+                                            <strong>Megjegyzés:</strong>{' '}
+                                            {appointment.notes || '-'}
+                                        </p>
+
+                                        {isAdmin && (
+                                            <p>
+                                                <strong>Foglaló felhasználó:</strong>{' '}
+                                                {appointment.users?.full_name ||
+                                                    appointment.users?.email ||
+                                                    'Nincs adat'}
+                                            </p>
+                                        )}
+
+                                        <div className="card-actions">
+                                            <button
+                                                className="button button--secondary"
+                                                type="button"
+                                                onClick={() =>
+                                                    handleEditAppointment(appointment)
+                                                }
+                                            >
+                                                Szerkesztés
+                                            </button>
+
+                                            <button
+                                                className="button button--secondary"
+                                                type="button"
+                                                onClick={() =>
+                                                    handleDeleteAppointment(appointment)
+                                                }
+                                            >
+                                                Törlés
+                                            </button>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
         </section>
-    );
+    )
 }
