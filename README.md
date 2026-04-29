@@ -8,6 +8,12 @@
 
 ---
 
+## Rövid leírás
+
+A SlaySalon egy React + Vite + Supabase alapú műköröm időpontfoglaló alkalmazás.  
+A felhasználók szolgáltatásokat böngészhetnek, időpontot foglalhatnak, kapcsolatfelvételi üzenetet küldhetnek, valamint autentikáció után kezelhetik a saját foglalásaikat.  
+Admin jogosultsággal a szolgáltatások és foglalások is kezelhetők.
+
 ## 🚀 A projekt indítása (lokális futtatás)
 
 ```bash
