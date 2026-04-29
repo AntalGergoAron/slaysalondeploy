@@ -4,10 +4,6 @@ import Navbar from "../components/Navbar";
 export default function Layout() {
     return (
         <>
-            <a href="#main-content" className="skip-link">
-                Ugrás a tartalomra
-            </a>
-
             <header className="site-header">
                 <Navbar />
             </header>

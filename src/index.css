@@ -110,20 +110,6 @@ textarea:focus-visible {
   box-shadow: 0 0 0 3px rgba(210, 92, 147, 0.18);
 }
 
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: var(--space-4);
-  background: var(--color-primary);
-  color: white;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-sm);
-  z-index: 1000;
-}
-
-.skip-link:focus {
-  top: var(--space-4);
-}
 
 .site-header {
   background: var(--color-surface);
@@ -617,5 +603,91 @@ p {
 
   .homepage-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+body {
+  background:
+          radial-gradient(circle at top left, rgba(210, 92, 147, 0.08), transparent 28%),
+          radial-gradient(circle at top right, rgba(181, 69, 122, 0.07), transparent 24%),
+          linear-gradient(180deg, #fff9fc 0%, #fff6fa 100%);
+  background-attachment: fixed;
+}
+
+.site-main {
+  position: relative;
+}
+
+.site-main::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+          linear-gradient(rgba(210, 92, 147, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(210, 92, 147, 0.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.22), transparent 80%);
+  z-index: 0;
+}
+
+.site-header,
+.site-main,
+.site-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.homepage-gallery {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.homepage-gallery-card {
+  overflow: hidden;
+  padding: 0;
+  min-height: 360px;
+}
+
+.homepage-gallery-image {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  display: block;
+}
+
+.homepage-gallery-content {
+  padding: var(--space-4);
+}
+
+.homepage-review-card,
+.homepage-step-card,
+.homepage-faq-item,
+.homepage-mini-card,
+.homepage-gallery-card {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(3px);
+}
+
+@media (min-width: 768px) {
+  .homepage-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .homepage-gallery-card {
+    min-height: 420px;
+  }
+
+  .homepage-gallery-image {
+    height: 340px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .homepage-gallery-card {
+    min-height: 460px;
+  }
+
+  .homepage-gallery-image {
+    height: 380px;
   }
 }
