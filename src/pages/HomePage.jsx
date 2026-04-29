@@ -142,7 +142,7 @@ export default function HomePage() {
                     <h2>Vendégvélemények</h2>
                     <p className="page-intro">
                         Egy szalon oldalán sokat számít a bizalom, ezért érdemes rövid,
-                        hitelesnek ható értékeléseket is megjeleníteni. :contentReference[oaicite:2]{index=2}
+                        hitelesnek ható értékeléseket is megjeleníteni.
                     </p>
                 </div>
 
