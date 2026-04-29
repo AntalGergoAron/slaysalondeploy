@@ -3,27 +3,27 @@ import { Link } from 'react-router-dom'
 const featuredWorks = [
     {
         id: 1,
-        title: 'Babyboomer mandula',
+        title: 'Korall hullámos minta',
         image: '/images/nails-1.jpg',
-        alt: 'Babyboomer stílusú mandula formájú műköröm',
+        alt: 'Korall színű köröm fehér hullámos mintával',
     },
     {
         id: 2,
-        title: 'Francia elegáns',
+        title: 'Sárga virágos francia',
         image: '/images/nails-2.jpg',
-        alt: 'Francia stílusú elegáns műköröm',
+        alt: 'Sárga végű francia köröm virágmintával',
     },
     {
         id: 3,
-        title: 'Rózsaszín gloss',
+        title: 'Kék fényes virágmintás',
         image: '/images/nails-3.jpg',
-        alt: 'Rózsaszín fényes műköröm',
+        alt: 'Pasztellkék köröm virágmintás díszítéssel',
     },
     {
         id: 4,
-        title: 'Minimal nude díszítéssel',
+        title: 'Bordó mandula klasszikus',
         image: '/images/nails-4.jpg',
-        alt: 'Nude műköröm finom díszítéssel',
+        alt: 'Bordó mandula formájú elegáns köröm',
     },
 ]
 

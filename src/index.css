@@ -561,3 +561,80 @@ p {
     height: 430px;
   }
 }
+
+.page-shell > section,
+.page-shell > .panel,
+.page-shell > .cta-section {
+  position: relative;
+}
+
+.page-shell > section:not(:first-child),
+.page-shell > .panel:not(:first-child),
+.page-shell > .cta-section:not(:first-child) {
+  margin-top: 2.25rem;
+  padding-top: 1.25rem;
+}
+
+.page-shell > section:not(:first-child)::before,
+.page-shell > .panel:not(:first-child)::before,
+.page-shell > .cta-section:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(210, 92, 147, 0.28) 12%,
+          rgba(210, 92, 147, 0.5) 50%,
+          rgba(210, 92, 147, 0.28) 88%,
+          transparent 100%
+  );
+}
+
+.page-header {
+  position: relative;
+  padding-bottom: 0.75rem;
+}
+
+.page-header::after {
+  content: "";
+  display: block;
+  width: 90px;
+  height: 3px;
+  margin-top: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(
+          90deg,
+          var(--color-primary),
+          rgba(210, 92, 147, 0.18)
+  );
+}
+
+.panel,
+.hero-section,
+.cta-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.panel::after,
+.hero-section::after,
+.cta-section::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(210, 92, 147, 0.08);
+}
+.services-grid {
+  position: relative;
+  padding-top: 0.5rem;
+}
+
+.service-card {
+  border-top: 3px solid rgba(210, 92, 147, 0.22);
+}
