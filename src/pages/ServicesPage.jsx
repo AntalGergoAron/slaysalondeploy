@@ -234,10 +234,33 @@ export default function ServicesPage() {
             <div className="page-header">
                 <h1>Szolgáltatások</h1>
                 <p className="page-intro">
-                    Böngéssz a szolgáltatások között, keress név alapján, és admin
-                    felhasználóként kezeld a kínálatot.
+                    Böngéssz a szolgáltatások között, hasonlítsd össze az árakat és időtartamokat,
+                    majd válaszd ki a hozzád legjobban illő opciót.
                 </p>
                 {isAdmin && <span className="role-badge">Admin mód</span>}
+            </div>
+
+            <div className="service-page-top-grid">
+                <article className="service-page-info-card">
+                    <h3>Személyre szabott megoldások</h3>
+                    <p className="service-page-note">
+                        Letisztult, elegáns és alkalmi stílusok közül is választhatsz.
+                    </p>
+                </article>
+
+                <article className="service-page-info-card">
+                    <h3>Átlátható foglalás</h3>
+                    <p className="service-page-note">
+                        A szolgáltatások között könnyen kereshetsz és gyorsan foglalhatsz.
+                    </p>
+                </article>
+
+                <article className="service-page-info-card">
+                    <h3>Kényelmes online ügyintézés</h3>
+                    <p className="service-page-note">
+                        Néhány kattintással megtalálhatod a számodra megfelelő időpontot.
+                    </p>
+                </article>
             </div>
 
             {serviceError && <div className="alert alert--error">{serviceError}</div>}
@@ -334,8 +357,8 @@ export default function ServicesPage() {
                                 {serviceSubmitting
                                     ? 'Mentés...'
                                     : editingService
-                                      ? 'Módosítás mentése'
-                                      : 'Szolgáltatás létrehozása'}
+                                        ? 'Módosítás mentése'
+                                        : 'Szolgáltatás létrehozása'}
                             </button>
 
                             {editingService && (
@@ -446,6 +469,32 @@ export default function ServicesPage() {
                     ))}
                 </div>
             )}
+
+            <div className="service-page-bottom-grid">
+                <article className="service-page-info-card">
+                    <h3>Mire figyelj foglalás előtt?</h3>
+                    <p className="service-page-note">
+                        Ha van elképzelésed vagy referencia képed, érdemes magaddal hozni,
+                        így könnyebb a számodra legjobb stílust kiválasztani.
+                    </p>
+                </article>
+
+                <article className="service-page-info-card">
+                    <h3>Mennyi idővel érdemes számolni?</h3>
+                    <p className="service-page-note">
+                        A pontos időtartam a választott szolgáltatástól függ, ezért a listában
+                        minden tételnél külön feltüntettük.
+                    </p>
+                </article>
+
+                <article className="service-page-info-card">
+                    <h3>Nem találod, amit keresel?</h3>
+                    <p className="service-page-note">
+                        Nézd meg a kapcsolat oldalt, vagy írj üzenetet, és segítünk a megfelelő
+                        szolgáltatás kiválasztásában.
+                    </p>
+                </article>
+            </div>
         </section>
     )
 }
