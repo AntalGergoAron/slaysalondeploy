@@ -2,26 +2,31 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-const authHighlights = [
+const accountInfoCards = [
     {
         id: 1,
-        title: 'Egyszerű hozzáférés',
-        text: 'Egy fiókkal gyorsabban foglalhatsz és egy helyen láthatod a saját adataidat.',
+        title: 'Gyorsabb foglalás',
+        text: 'Fiókkal egyszerűbben tudsz időpontot foglalni és visszatérni a fontos oldalakra.',
     },
     {
         id: 2,
-        title: 'Gyors újrafoglalás',
-        text: 'A rendszer segít abban, hogy könnyebben visszatalálj a foglalási folyamathoz.',
+        title: 'Átlátható adatok',
+        text: 'A bejelentkezett fiókadataid egy helyen jelennek meg, tiszta felületen.',
     },
     {
         id: 3,
-        title: 'Átlátható fióknézet',
-        text: 'A bejelentkezett munkamenet és az alapadataid jól láthatóan megjelennek.',
+        title: 'Kényelmes használat',
+        text: 'A szolgáltatások, a foglalások és a kapcsolat oldal gyorsan elérhető innen is.',
     },
 ]
 
 export default function AuthPage() {
     const { authUser, dbUser, signIn, signUp, signOut } = useAuth()
+
+    const [mode, setMode] = useState('login')
+    const [loading, setLoading] = useState(false)
+    const [authError, setAuthError] = useState('')
+    const [authSuccess, setAuthSuccess] = useState('')
 
     const [loginData, setLoginData] = useState({
         email: '',
@@ -34,10 +39,6 @@ export default function AuthPage() {
         password: '',
         confirmPassword: '',
     })
-
-    const [loading, setLoading] = useState(false)
-    const [authError, setAuthError] = useState('')
-    const [authSuccess, setAuthSuccess] = useState('')
 
     const isLoggedIn = !!authUser
 
@@ -69,10 +70,12 @@ export default function AuthPage() {
 
         try {
             setLoading(true)
+
             await signIn({
                 email: loginData.email.trim(),
                 password: loginData.password,
             })
+
             setAuthSuccess('Sikeres bejelentkezés.')
             setLoginData({
                 email: '',
@@ -118,11 +121,13 @@ export default function AuthPage() {
 
         try {
             setLoading(true)
+
             await signUp({
                 fullName: registerData.fullName.trim(),
                 email: registerData.email.trim(),
                 password: registerData.password,
             })
+
             setAuthSuccess('Sikeres regisztráció. Most már bejelentkezhetsz.')
             setRegisterData({
                 fullName: '',
@@ -130,6 +135,7 @@ export default function AuthPage() {
                 password: '',
                 confirmPassword: '',
             })
+            setMode('login')
         } catch (err) {
             setAuthError(err.message)
         } finally {
@@ -157,192 +163,202 @@ export default function AuthPage() {
             <div className="page-header">
                 <h1>Fiók</h1>
                 <p className="page-intro">
-                    Itt tudsz bejelentkezni, regisztrálni, vagy megnézni az aktuális
-                    fiókadataidat.
+                    Jelentkezz be vagy hozz létre fiókot, hogy kényelmesebben kezeld a
+                    foglalásaidat és gyorsabban visszatérhess az oldalra.
                 </p>
-            </div>
-
-            <div className="service-page-top-grid">
-                {authHighlights.map((item) => (
-                    <article className="service-page-info-card" key={item.id}>
-                        <h3>{item.title}</h3>
-                        <p className="service-page-note">{item.text}</p>
-                    </article>
-                ))}
             </div>
 
             {authError && <div className="alert alert--error">{authError}</div>}
             {authSuccess && <div className="alert alert--success">{authSuccess}</div>}
 
-            {isLoggedIn ? (
-                <>
-                    <div className="panel">
-                        <div className="page-header">
-                            <h2>Aktív munkamenet</h2>
-                            <p className="page-intro">
-                                Jelenleg be vagy jelentkezve. Innen gyorsan tovább tudsz lépni
-                                a foglalási vagy szolgáltatási oldalra.
-                            </p>
-                        </div>
-
-                        <div className="service-page-bottom-grid">
-                            <article className="service-page-info-card">
-                                <h3>Fiókadatok</h3>
-                                <p><strong>Email:</strong> {dbUser?.email || authUser?.email}</p>
-                                <p><strong>Név:</strong> {dbUser?.full_name || '-'}</p>
-                                <p><strong>Szerepkör:</strong> {dbUser?.role || '-'}</p>
-                            </article>
-
-                            <article className="service-page-info-card">
-                                <h3>Gyors műveletek</h3>
-                                <div className="form-actions">
-                                    <Link to="/foglalas" className="button button--primary">
-                                        Foglalások
-                                    </Link>
-                                    <Link to="/szolgaltatasok" className="button button--secondary">
-                                        Szolgáltatások
-                                    </Link>
-                                </div>
-                            </article>
-
-                            <article className="service-page-info-card">
-                                <h3>Kapcsolat</h3>
-                                <p className="service-page-note">
-                                    Ha egyedi kérdésed van, a kapcsolat oldalon üzenetet is tudsz
-                                    küldeni.
-                                </p>
-                                <div className="form-actions" style={{ marginTop: '1rem' }}>
-                                    <Link to="/kapcsolat" className="button button--secondary">
-                                        Kapcsolat
-                                    </Link>
-                                </div>
-                            </article>
-                        </div>
-
-                        <div className="form-actions" style={{ marginTop: '1rem' }}>
+            <div className="auth-page-center">
+                {!isLoggedIn ? (
+                    <div className="auth-simple-card">
+                        <div className="auth-simple-switch">
                             <button
-                                className="button button--primary"
                                 type="button"
-                                onClick={handleSignOut}
-                                disabled={loading}
+                                className={`auth-simple-switch__button ${mode === 'login' ? 'auth-simple-switch__button--active' : ''}`}
+                                onClick={() => setMode('login')}
                             >
-                                {loading ? 'Kijelentkezés...' : 'Kijelentkezés'}
+                                Bejelentkezés
+                            </button>
+
+                            <button
+                                type="button"
+                                className={`auth-simple-switch__button ${mode === 'register' ? 'auth-simple-switch__button--active' : ''}`}
+                                onClick={() => setMode('register')}
+                            >
+                                Regisztráció
                             </button>
                         </div>
+
+                        {mode === 'login' ? (
+                            <div className="auth-simple-content">
+                                <div className="page-header">
+                                    <h2>Bejelentkezés</h2>
+                                    <p className="page-intro">
+                                        Lépj be a fiókodba, és folytasd ott, ahol abbahagytad.
+                                    </p>
+                                </div>
+
+                                <form className="app-form" onSubmit={handleLoginSubmit}>
+                                    <div className="form-field">
+                                        <label htmlFor="login_email">Email</label>
+                                        <input
+                                            id="login_email"
+                                            name="email"
+                                            type="email"
+                                            value={loginData.email}
+                                            onChange={handleLoginChange}
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label htmlFor="login_password">Jelszó</label>
+                                        <input
+                                            id="login_password"
+                                            name="password"
+                                            type="password"
+                                            value={loginData.password}
+                                            onChange={handleLoginChange}
+                                        />
+                                    </div>
+
+                                    <div className="form-actions">
+                                        <button
+                                            className="button button--primary"
+                                            type="submit"
+                                            disabled={loading}
+                                        >
+                                            {loading ? 'Folyamatban...' : 'Bejelentkezés'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        ) : (
+                            <div className="auth-simple-content">
+                                <div className="page-header">
+                                    <h2>Regisztráció</h2>
+                                    <p className="page-intro">
+                                        Hozz létre fiókot, hogy gyorsabban tudj foglalni.
+                                    </p>
+                                </div>
+
+                                <form className="app-form" onSubmit={handleRegisterSubmit}>
+                                    <div className="form-field">
+                                        <label htmlFor="register_fullName">Név</label>
+                                        <input
+                                            id="register_fullName"
+                                            name="fullName"
+                                            type="text"
+                                            value={registerData.fullName}
+                                            onChange={handleRegisterChange}
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label htmlFor="register_email">Email</label>
+                                        <input
+                                            id="register_email"
+                                            name="email"
+                                            type="email"
+                                            value={registerData.email}
+                                            onChange={handleRegisterChange}
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label htmlFor="register_password">Jelszó</label>
+                                        <input
+                                            id="register_password"
+                                            name="password"
+                                            type="password"
+                                            value={registerData.password}
+                                            onChange={handleRegisterChange}
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label htmlFor="register_confirmPassword">Jelszó újra</label>
+                                        <input
+                                            id="register_confirmPassword"
+                                            name="confirmPassword"
+                                            type="password"
+                                            value={registerData.confirmPassword}
+                                            onChange={handleRegisterChange}
+                                        />
+                                    </div>
+
+                                    <div className="form-actions">
+                                        <button
+                                            className="button button--primary"
+                                            type="submit"
+                                            disabled={loading}
+                                        >
+                                            {loading ? 'Folyamatban...' : 'Regisztráció'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        )}
                     </div>
-                </>
-            ) : (
-                <div className="service-page-bottom-grid">
-                    <div className="panel">
-                        <div className="page-header">
-                            <h2>Bejelentkezés</h2>
-                            <p className="page-intro">
-                                Ha már van fiókod, itt tudsz belépni.
-                            </p>
-                        </div>
-
-                        <form className="app-form" onSubmit={handleLoginSubmit}>
-                            <div className="form-field">
-                                <label htmlFor="login_email">Email</label>
-                                <input
-                                    id="login_email"
-                                    name="email"
-                                    type="email"
-                                    value={loginData.email}
-                                    onChange={handleLoginChange}
-                                />
+                ) : (
+                    <div className="auth-simple-card">
+                        <div className="auth-simple-content">
+                            <div className="page-header">
+                                <h2>Aktív munkamenet</h2>
+                                <p className="page-intro">
+                                    Jelenleg be vagy jelentkezve. Innen gyorsan továbbléphetsz.
+                                </p>
                             </div>
 
-                            <div className="form-field">
-                                <label htmlFor="login_password">Jelszó</label>
-                                <input
-                                    id="login_password"
-                                    name="password"
-                                    type="password"
-                                    value={loginData.password}
-                                    onChange={handleLoginChange}
-                                />
+                            <div className="auth-simple-account-grid">
+                                <article className="auth-simple-info-box">
+                                    <h3>Fiókadatok</h3>
+                                    <p><strong>Email:</strong> {dbUser?.email || authUser?.email}</p>
+                                    <p><strong>Név:</strong> {dbUser?.full_name || '-'}</p>
+                                    <p><strong>Szerepkör:</strong> {dbUser?.role || '-'}</p>
+                                </article>
+
+                                <article className="auth-simple-info-box">
+                                    <h3>Gyors elérés</h3>
+                                    <div className="form-actions">
+                                        <Link to="/foglalas" className="button button--primary">
+                                            Foglalások
+                                        </Link>
+                                        <Link to="/szolgaltatasok" className="button button--secondary">
+                                            Szolgáltatások
+                                        </Link>
+                                        <Link to="/kapcsolat" className="button button--secondary">
+                                            Kapcsolat
+                                        </Link>
+                                    </div>
+                                </article>
                             </div>
 
-                            <div className="form-actions">
+                            <div className="form-actions" style={{ marginTop: '1rem' }}>
                                 <button
                                     className="button button--primary"
-                                    type="submit"
+                                    type="button"
+                                    onClick={handleSignOut}
                                     disabled={loading}
                                 >
-                                    {loading ? 'Folyamatban...' : 'Bejelentkezés'}
+                                    {loading ? 'Kijelentkezés...' : 'Kijelentkezés'}
                                 </button>
                             </div>
-                        </form>
-                    </div>
-
-                    <div className="panel">
-                        <div className="page-header">
-                            <h2>Regisztráció</h2>
-                            <p className="page-intro">
-                                Hozz létre fiókot, hogy gyorsabban foglalhass és lásd a saját
-                                adataidat.
-                            </p>
                         </div>
-
-                        <form className="app-form" onSubmit={handleRegisterSubmit}>
-                            <div className="form-field">
-                                <label htmlFor="register_fullName">Név</label>
-                                <input
-                                    id="register_fullName"
-                                    name="fullName"
-                                    type="text"
-                                    value={registerData.fullName}
-                                    onChange={handleRegisterChange}
-                                />
-                            </div>
-
-                            <div className="form-field">
-                                <label htmlFor="register_email">Email</label>
-                                <input
-                                    id="register_email"
-                                    name="email"
-                                    type="email"
-                                    value={registerData.email}
-                                    onChange={handleRegisterChange}
-                                />
-                            </div>
-
-                            <div className="form-field">
-                                <label htmlFor="register_password">Jelszó</label>
-                                <input
-                                    id="register_password"
-                                    name="password"
-                                    type="password"
-                                    value={registerData.password}
-                                    onChange={handleRegisterChange}
-                                />
-                            </div>
-
-                            <div className="form-field">
-                                <label htmlFor="register_confirmPassword">Jelszó újra</label>
-                                <input
-                                    id="register_confirmPassword"
-                                    name="confirmPassword"
-                                    type="password"
-                                    value={registerData.confirmPassword}
-                                    onChange={handleRegisterChange}
-                                />
-                            </div>
-
-                            <div className="form-actions">
-                                <button
-                                    className="button button--primary"
-                                    type="submit"
-                                    disabled={loading}
-                                >
-                                    {loading ? 'Folyamatban...' : 'Regisztráció'}
-                                </button>
-                            </div>
-                        </form>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
+
+            <div className="auth-info-row">
+                {accountInfoCards.map((item) => (
+                    <article key={item.id} className="auth-info-row__card">
+                        <h3>{item.title}</h3>
+                        <p>{item.text}</p>
+                    </article>
+                ))}
+            </div>
         </section>
     )
 }
