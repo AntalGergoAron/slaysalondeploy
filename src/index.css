@@ -158,10 +158,21 @@ textarea:focus-visible {
 }
 
 .navbar__brand {
-  font-size: 1.9rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
   color: var(--color-primary-dark);
+}
+
+.navbar__logo {
+  height: 42px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.navbar__brand-text {
+  display: none;
 }
 
 .navbar__links {
@@ -246,7 +257,10 @@ p {
 .homepage-review-card,
 .homepage-step-card,
 .homepage-faq-item,
-.service-page-info-card {
+.service-page-info-card,
+.auth-simple-card,
+.auth-simple-info-box,
+.auth-info-row__card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
@@ -442,7 +456,9 @@ p {
 .homepage-review-card,
 .homepage-step-card,
 .homepage-faq-item,
-.service-page-info-card {
+.service-page-info-card,
+.auth-simple-info-box,
+.auth-info-row__card {
   padding: var(--space-4);
   position: relative;
   overflow: hidden;
@@ -454,7 +470,9 @@ p {
 .homepage-mini-card::before,
 .homepage-review-card::before,
 .homepage-step-card::before,
-.homepage-faq-item::before {
+.homepage-faq-item::before,
+.auth-simple-info-box::before,
+.auth-info-row__card::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -490,6 +508,27 @@ p {
   flex-direction: column;
   gap: var(--space-3);
   margin-top: var(--space-4);
+}
+
+.homepage-hero {
+  text-align: center;
+}
+
+.homepage-hero__logo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.homepage-hero__logo {
+  width: min(100%, 440px);
+  height: auto;
+  object-fit: contain;
+}
+
+.homepage-hero .hero-section__actions {
+  justify-content: center;
+  align-items: center;
 }
 
 .homepage-gallery-card {
@@ -554,6 +593,56 @@ p {
   font-weight: 600;
 }
 
+.auth-page-center {
+  display: flex;
+  justify-content: center;
+}
+
+.auth-simple-card {
+  width: 100%;
+  max-width: 640px;
+  overflow: hidden;
+}
+
+.auth-simple-switch {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  padding: 1rem 1rem 0;
+  gap: 0.75rem;
+}
+
+.auth-simple-switch__button {
+  min-height: 46px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text);
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.auth-simple-switch__button--active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.auth-simple-content {
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-simple-account-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-info-row {
+  display: grid;
+  gap: 1rem;
+}
+
 @media (min-width: 768px) {
   .navbar {
     flex-direction: row;
@@ -609,6 +698,11 @@ p {
   .homepage-gallery-image {
     height: 390px;
   }
+
+  .auth-simple-account-grid,
+  .auth-info-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (min-width: 1024px) {
@@ -631,78 +725,7 @@ p {
   .homepage-gallery-image {
     height: 430px;
   }
-}
-.auth-page-center {
-  display: flex;
-  justify-content: center;
-}
 
-.auth-simple-card {
-  width: 100%;
-  max-width: 640px;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-
-.auth-simple-switch {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  padding: 1rem 1rem 0;
-  gap: 0.75rem;
-}
-
-.auth-simple-switch__button {
-  min-height: 46px;
-  border: 1px solid var(--color-border);
-  background: #fff;
-  color: var(--color-text);
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.auth-simple-switch__button--active {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
-
-.auth-simple-content {
-  padding: 1.5rem;
-  display: grid;
-  gap: 1rem;
-}
-
-.auth-simple-account-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-.auth-simple-info-box,
-.auth-info-row__card {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem;
-  box-shadow: var(--shadow-sm);
-}
-
-.auth-info-row {
-  display: grid;
-  gap: 1rem;
-}
-
-@media (min-width: 768px) {
-  .auth-simple-account-grid,
-  .auth-info-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1024px) {
   .auth-info-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

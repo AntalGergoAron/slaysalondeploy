@@ -17,34 +17,13 @@ const featuredWorks = [
         id: 3,
         title: 'Kék fényes virágmintás',
         image: '/images/nails-3.jpg',
-        alt: 'Pasztellkék köröm virágmintás díszítéssel',
+        alt: 'Kék fényes köröm virágmintás díszítéssel',
     },
     {
         id: 4,
-        title: 'Bordó mandula klasszikus',
+        title: 'Lila csillámos',
         image: '/images/nails-4.jpg',
-        alt: 'Bordó mandula formájú elegáns köröm',
-    },
-]
-
-const reviews = [
-    {
-        id: 1,
-        name: 'Kata',
-        rating: 5,
-        text: 'Nagyon szép lett a körmöm, pontosan olyat kaptam, amilyet szerettem volna. Igényes munka és nagyon kedves kiszolgálás.',
-    },
-    {
-        id: 2,
-        name: 'Anna',
-        rating: 5,
-        text: 'Tartós, precíz és gyönyörű lett. Több hét után is szépen bírta, biztosan jövök még.',
-    },
-    {
-        id: 3,
-        name: 'Dóri',
-        rating: 5,
-        text: 'A foglalás egyszerű volt, a végeredmény pedig még szebb lett, mint a referencia kép. Nagyon elégedett vagyok.',
+        alt: 'Lila csillámos',
     },
 ]
 
@@ -66,6 +45,45 @@ const highlights = [
     },
 ]
 
+const reviews = [
+    {
+        id: 1,
+        name: 'Kata',
+        rating: 5,
+        text: 'Nagyon szép lett a körmöm, pontosan olyan, amilyet szerettem volna.',
+    },
+    {
+        id: 2,
+        name: 'Anna',
+        rating: 5,
+        text: 'Tartós, precíz és gyönyörű lett. Biztosan jövök még.',
+    },
+    {
+        id: 3,
+        name: 'Dóri',
+        rating: 5,
+        text: 'A foglalás egyszerű volt, a végeredmény pedig még szebb lett, mint a referencia kép.',
+    },
+]
+
+const steps = [
+    {
+        id: 1,
+        title: 'Válassz szolgáltatást',
+        text: 'Nézd meg az elérhető szolgáltatásokat és árakat.',
+    },
+    {
+        id: 2,
+        title: 'Foglalj időpontot',
+        text: 'Válaszd ki a számodra megfelelő időpontot online.',
+    },
+    {
+        id: 3,
+        title: 'Érkezz a kiválasztott időben',
+        text: 'Ha van referencia képed, nyugodtan hozd magaddal.',
+    },
+]
+
 const faqItems = [
     {
         id: 1,
@@ -75,21 +93,27 @@ const faqItems = [
     {
         id: 2,
         question: 'Lehet referencia képet hozni?',
-        answer: 'Igen, sőt kifejezetten hasznos. Így könnyebb pontosan belőni a kívánt stílust és színeket.',
+        answer: 'Igen, sőt kifejezetten hasznos, mert így könnyebben pontosítható a kívánt stílus.',
     },
     {
         id: 3,
-        question: 'Mikor érdemes új időpontot foglalni töltésre?',
-        answer: 'Általában 3–4 hetente ajánlott, de ez függ a köröm növekedésétől és az igénybevételtől is.',
+        question: 'Mikor érdemes új időpontot foglalni?',
+        answer: 'Általában 3–4 hetente ajánlott, de ez a növekedéstől és a választott típustól is függ.',
     },
 ]
 
 export default function HomePage() {
     return (
         <section className="page-shell">
-            <section className="hero-section">
-                <p className="hero-section__eyebrow">Modern műköröm időpontfoglalás</p>
-                <h1>SlaySalon</h1>
+            <section className="hero-section homepage-hero">
+                <div className="homepage-hero__logo-wrap">
+                    <img
+                        src="/images/slaysalon-logo.png"
+                        alt="SlaySalon logó"
+                        className="homepage-hero__logo"
+                    />
+                </div>
+
                 <p className="hero-section__text">
                     Foglalj időpontot gyorsan és egyszerűen, nézd meg referencia munkáimat,
                     és válassz olyan stílust, ami igazán illik hozzád.
@@ -109,7 +133,7 @@ export default function HomePage() {
                 <div className="homepage-highlights">
                     {highlights.map((item) => (
                         <article key={item.id} className="homepage-mini-card">
-                            <h2>{item.title}</h2>
+                            <h3>{item.title}</h3>
                             <p>{item.text}</p>
                         </article>
                     ))}
@@ -128,7 +152,11 @@ export default function HomePage() {
                 <div className="homepage-gallery">
                     {featuredWorks.map((work) => (
                         <article key={work.id} className="homepage-gallery-card">
-                            <img src={work.image} alt={work.alt} className="homepage-gallery-image" />
+                            <img
+                                src={work.image}
+                                alt={work.alt}
+                                className="homepage-gallery-image"
+                            />
                             <div className="homepage-gallery-content">
                                 <h3>{work.title}</h3>
                             </div>
@@ -142,16 +170,14 @@ export default function HomePage() {
                     <h2>Vendégvélemények</h2>
                     <p className="page-intro">
                         Egy szalon oldalán sokat számít a bizalom, ezért érdemes rövid,
-                        hitelesnek ható értékeléseket is megjeleníteni.
+                        hiteles értékeléseket is megjeleníteni.
                     </p>
                 </div>
 
                 <div className="homepage-reviews">
                     {reviews.map((review) => (
                         <article key={review.id} className="homepage-review-card">
-                            <p className="homepage-review-stars">
-                                {'★'.repeat(review.rating)}
-                            </p>
+                            <p className="homepage-review-stars">{'★'.repeat(review.rating)}</p>
                             <p className="homepage-review-text">“{review.text}”</p>
                             <p className="homepage-review-name">— {review.name}</p>
                         </article>
@@ -165,23 +191,13 @@ export default function HomePage() {
                 </div>
 
                 <div className="homepage-steps">
-                    <article className="homepage-step-card">
-                        <span className="homepage-step-number">1</span>
-                        <h3>Válassz szolgáltatást</h3>
-                        <p>Nézd meg az elérhető szolgáltatásokat és árakat.</p>
-                    </article>
-
-                    <article className="homepage-step-card">
-                        <span className="homepage-step-number">2</span>
-                        <h3>Foglalj időpontot</h3>
-                        <p>Válaszd ki a számodra megfelelő időpontot online.</p>
-                    </article>
-
-                    <article className="homepage-step-card">
-                        <span className="homepage-step-number">3</span>
-                        <h3>Érkezz a kiválasztott időben</h3>
-                        <p>Ha van referencia képed, nyugodtan hozd magaddal.</p>
-                    </article>
+                    {steps.map((step, index) => (
+                        <article key={step.id} className="homepage-step-card">
+                            <div className="homepage-step-number">{index + 1}</div>
+                            <h3>{step.title}</h3>
+                            <p>{step.text}</p>
+                        </article>
+                    ))}
                 </div>
             </section>
 
@@ -197,23 +213,6 @@ export default function HomePage() {
                             <p>{item.answer}</p>
                         </article>
                     ))}
-                </div>
-            </section>
-
-            <section className="cta-section">
-                <h2>Készen állsz a foglalásra?</h2>
-                <p>
-                    Válaszd ki a számodra megfelelő szolgáltatást és foglalj időpontot néhány
-                    kattintással.
-                </p>
-
-                <div className="hero-section__actions">
-                    <Link to="/foglalas" className="button button--primary">
-                        Tovább a foglaláshoz
-                    </Link>
-                    <Link to="/kapcsolat" className="button button--secondary">
-                        Kapcsolat
-                    </Link>
                 </div>
             </section>
         </section>
