@@ -1,87 +1,155 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-export default function AuthPage() {
-    const { authUser, dbUser, loading, signUp, signIn, signOut } = useAuth()
+const authHighlights = [
+    {
+        id: 1,
+        title: 'Egyszerű hozzáférés',
+        text: 'Egy fiókkal gyorsabban foglalhatsz és egy helyen láthatod a saját adataidat.',
+    },
+    {
+        id: 2,
+        title: 'Gyors újrafoglalás',
+        text: 'A rendszer segít abban, hogy könnyebben visszatalálj a foglalási folyamathoz.',
+    },
+    {
+        id: 3,
+        title: 'Átlátható fióknézet',
+        text: 'A bejelentkezett munkamenet és az alapadataid jól láthatóan megjelennek.',
+    },
+]
 
-    const [mode, setMode] = useState('login')
-    const [formData, setFormData] = useState({
-        fullName: '',
+export default function AuthPage() {
+    const { authUser, dbUser, signIn, signUp, signOut } = useAuth()
+
+    const [loginData, setLoginData] = useState({
         email: '',
         password: '',
     })
 
-    const [submitting, setSubmitting] = useState(false)
-    const [message, setMessage] = useState('')
-    const [error, setError] = useState('')
+    const [registerData, setRegisterData] = useState({
+        fullName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+    })
 
-    const handleChange = (event) => {
+    const [loading, setLoading] = useState(false)
+    const [authError, setAuthError] = useState('')
+    const [authSuccess, setAuthSuccess] = useState('')
+
+    const isLoggedIn = !!authUser
+
+    const handleLoginChange = (event) => {
         const { name, value } = event.target
-
-        setFormData((prev) => ({
+        setLoginData((prev) => ({
             ...prev,
             [name]: value,
         }))
     }
 
-    const switchMode = (newMode) => {
-        setMode(newMode)
-        setError('')
-        setMessage('')
+    const handleRegisterChange = (event) => {
+        const { name, value } = event.target
+        setRegisterData((prev) => ({
+            ...prev,
+            [name]: value,
+        }))
     }
 
-    const handleSubmit = async (event) => {
+    const handleLoginSubmit = async (event) => {
         event.preventDefault()
-        setError('')
-        setMessage('')
+        setAuthError('')
+        setAuthSuccess('')
+
+        if (!loginData.email.trim() || !loginData.password) {
+            setAuthError('Az email és jelszó megadása kötelező.')
+            return
+        }
 
         try {
-            setSubmitting(true)
-
-            if (mode === 'register') {
-                await signUp({
-                    fullName: formData.fullName.trim(),
-                    email: formData.email.trim(),
-                    password: formData.password,
-                })
-
-                setMessage(
-                    'Sikeres regisztráció. Ha email megerősítés szükséges, nézd meg a postaládádat.'
-                )
-            } else {
-                await signIn({
-                    email: formData.email.trim(),
-                    password: formData.password,
-                })
-
-                setMessage('Sikeres bejelentkezés.')
-            }
-
-            setFormData({
-                fullName: '',
+            setLoading(true)
+            await signIn({
+                email: loginData.email.trim(),
+                password: loginData.password,
+            })
+            setAuthSuccess('Sikeres bejelentkezés.')
+            setLoginData({
                 email: '',
                 password: '',
             })
         } catch (err) {
-            setError(err.message)
+            setAuthError(err.message)
         } finally {
-            setSubmitting(false)
+            setLoading(false)
         }
     }
 
-    const handleLogout = async () => {
+    const handleRegisterSubmit = async (event) => {
+        event.preventDefault()
+        setAuthError('')
+        setAuthSuccess('')
+
+        if (
+            !registerData.fullName.trim() ||
+            !registerData.email.trim() ||
+            !registerData.password ||
+            !registerData.confirmPassword
+        ) {
+            setAuthError('Minden regisztrációs mező kitöltése kötelező.')
+            return
+        }
+
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailPattern.test(registerData.email.trim())) {
+            setAuthError('Adj meg egy érvényes email címet.')
+            return
+        }
+
+        if (registerData.password.length < 6) {
+            setAuthError('A jelszónak legalább 6 karakterből kell állnia.')
+            return
+        }
+
+        if (registerData.password !== registerData.confirmPassword) {
+            setAuthError('A két jelszó nem egyezik.')
+            return
+        }
+
         try {
-            setError('')
-            setMessage('')
-            await signOut()
-            setMessage('Sikeres kijelentkezés.')
+            setLoading(true)
+            await signUp({
+                fullName: registerData.fullName.trim(),
+                email: registerData.email.trim(),
+                password: registerData.password,
+            })
+            setAuthSuccess('Sikeres regisztráció. Most már bejelentkezhetsz.')
+            setRegisterData({
+                fullName: '',
+                email: '',
+                password: '',
+                confirmPassword: '',
+            })
         } catch (err) {
-            setError(err.message)
+            setAuthError(err.message)
+        } finally {
+            setLoading(false)
         }
     }
 
-    if (loading) {
-        return <p>Auth betöltése...</p>
+    const handleSignOut = async () => {
+        setAuthError('')
+        setAuthSuccess('')
+
+        try {
+            setLoading(true)
+            await signOut()
+            setAuthSuccess('Sikeres kijelentkezés.')
+        } catch (err) {
+            setAuthError(err.message)
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -94,116 +162,186 @@ export default function AuthPage() {
                 </p>
             </div>
 
-            {error && <div className="alert alert--error">{error}</div>}
-            {message && <div className="alert alert--success">{message}</div>}
+            <div className="service-page-top-grid">
+                {authHighlights.map((item) => (
+                    <article className="service-page-info-card" key={item.id}>
+                        <h3>{item.title}</h3>
+                        <p className="service-page-note">{item.text}</p>
+                    </article>
+                ))}
+            </div>
 
-            {authUser ? (
-                <div className="panel">
-                    <h2>Aktív munkamenet</h2>
+            {authError && <div className="alert alert--error">{authError}</div>}
+            {authSuccess && <div className="alert alert--success">{authSuccess}</div>}
 
-                    <p>
-                        <strong>Email:</strong> {authUser.email}
-                    </p>
-                    <p>
-                        <strong>Név:</strong> {dbUser?.full_name || 'Nincs megadva'}
-                    </p>
-                    <p>
-                        <strong>Szerepkör:</strong> {dbUser?.role || 'client'}
-                    </p>
-
-                    <div className="form-actions">
-                        <button
-                            className="button button--primary"
-                            type="button"
-                            onClick={handleLogout}
-                        >
-                            Kijelentkezés
-                        </button>
-                    </div>
-                </div>
-            ) : (
+            {isLoggedIn ? (
                 <>
                     <div className="panel">
-                        <div className="form-actions">
-                            <button
-                                className="button button--secondary"
-                                type="button"
-                                onClick={() => switchMode('login')}
-                            >
-                                Bejelentkezés
-                            </button>
+                        <div className="page-header">
+                            <h2>Aktív munkamenet</h2>
+                            <p className="page-intro">
+                                Jelenleg be vagy jelentkezve. Innen gyorsan tovább tudsz lépni
+                                a foglalási vagy szolgáltatási oldalra.
+                            </p>
+                        </div>
 
+                        <div className="service-page-bottom-grid">
+                            <article className="service-page-info-card">
+                                <h3>Fiókadatok</h3>
+                                <p><strong>Email:</strong> {dbUser?.email || authUser?.email}</p>
+                                <p><strong>Név:</strong> {dbUser?.full_name || '-'}</p>
+                                <p><strong>Szerepkör:</strong> {dbUser?.role || '-'}</p>
+                            </article>
+
+                            <article className="service-page-info-card">
+                                <h3>Gyors műveletek</h3>
+                                <div className="form-actions">
+                                    <Link to="/foglalas" className="button button--primary">
+                                        Foglalások
+                                    </Link>
+                                    <Link to="/szolgaltatasok" className="button button--secondary">
+                                        Szolgáltatások
+                                    </Link>
+                                </div>
+                            </article>
+
+                            <article className="service-page-info-card">
+                                <h3>Kapcsolat</h3>
+                                <p className="service-page-note">
+                                    Ha egyedi kérdésed van, a kapcsolat oldalon üzenetet is tudsz
+                                    küldeni.
+                                </p>
+                                <div className="form-actions" style={{ marginTop: '1rem' }}>
+                                    <Link to="/kapcsolat" className="button button--secondary">
+                                        Kapcsolat
+                                    </Link>
+                                </div>
+                            </article>
+                        </div>
+
+                        <div className="form-actions" style={{ marginTop: '1rem' }}>
                             <button
-                                className="button button--secondary"
+                                className="button button--primary"
                                 type="button"
-                                onClick={() => switchMode('register')}
+                                onClick={handleSignOut}
+                                disabled={loading}
                             >
-                                Regisztráció
+                                {loading ? 'Kijelentkezés...' : 'Kijelentkezés'}
                             </button>
                         </div>
                     </div>
-
+                </>
+            ) : (
+                <div className="service-page-bottom-grid">
                     <div className="panel">
-                        <h2>{mode === 'login' ? 'Bejelentkezés' : 'Regisztráció'}</h2>
+                        <div className="page-header">
+                            <h2>Bejelentkezés</h2>
+                            <p className="page-intro">
+                                Ha már van fiókod, itt tudsz belépni.
+                            </p>
+                        </div>
 
-                        <form className="app-form" onSubmit={handleSubmit}>
-                            <div className="form-grid">
-                                {mode === 'register' && (
-                                    <div className="form-field form-field--full">
-                                        <label htmlFor="fullName">Teljes név</label>
-                                        <input
-                                            id="fullName"
-                                            name="fullName"
-                                            type="text"
-                                            value={formData.fullName}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </div>
-                                )}
+                        <form className="app-form" onSubmit={handleLoginSubmit}>
+                            <div className="form-field">
+                                <label htmlFor="login_email">Email</label>
+                                <input
+                                    id="login_email"
+                                    name="email"
+                                    type="email"
+                                    value={loginData.email}
+                                    onChange={handleLoginChange}
+                                />
+                            </div>
 
-                                <div className="form-field form-field--full">
-                                    <label htmlFor="email">Email</label>
-                                    <input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="form-field form-field--full">
-                                    <label htmlFor="password">Jelszó</label>
-                                    <input
-                                        id="password"
-                                        name="password"
-                                        type="password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        required
-                                        minLength={6}
-                                    />
-                                </div>
+                            <div className="form-field">
+                                <label htmlFor="login_password">Jelszó</label>
+                                <input
+                                    id="login_password"
+                                    name="password"
+                                    type="password"
+                                    value={loginData.password}
+                                    onChange={handleLoginChange}
+                                />
                             </div>
 
                             <div className="form-actions">
                                 <button
                                     className="button button--primary"
                                     type="submit"
-                                    disabled={submitting}
+                                    disabled={loading}
                                 >
-                                    {submitting
-                                        ? 'Folyamatban...'
-                                        : mode === 'login'
-                                          ? 'Bejelentkezés'
-                                          : 'Regisztráció'}
+                                    {loading ? 'Folyamatban...' : 'Bejelentkezés'}
                                 </button>
                             </div>
                         </form>
                     </div>
-                </>
+
+                    <div className="panel">
+                        <div className="page-header">
+                            <h2>Regisztráció</h2>
+                            <p className="page-intro">
+                                Hozz létre fiókot, hogy gyorsabban foglalhass és lásd a saját
+                                adataidat.
+                            </p>
+                        </div>
+
+                        <form className="app-form" onSubmit={handleRegisterSubmit}>
+                            <div className="form-field">
+                                <label htmlFor="register_fullName">Név</label>
+                                <input
+                                    id="register_fullName"
+                                    name="fullName"
+                                    type="text"
+                                    value={registerData.fullName}
+                                    onChange={handleRegisterChange}
+                                />
+                            </div>
+
+                            <div className="form-field">
+                                <label htmlFor="register_email">Email</label>
+                                <input
+                                    id="register_email"
+                                    name="email"
+                                    type="email"
+                                    value={registerData.email}
+                                    onChange={handleRegisterChange}
+                                />
+                            </div>
+
+                            <div className="form-field">
+                                <label htmlFor="register_password">Jelszó</label>
+                                <input
+                                    id="register_password"
+                                    name="password"
+                                    type="password"
+                                    value={registerData.password}
+                                    onChange={handleRegisterChange}
+                                />
+                            </div>
+
+                            <div className="form-field">
+                                <label htmlFor="register_confirmPassword">Jelszó újra</label>
+                                <input
+                                    id="register_confirmPassword"
+                                    name="confirmPassword"
+                                    type="password"
+                                    value={registerData.confirmPassword}
+                                    onChange={handleRegisterChange}
+                                />
+                            </div>
+
+                            <div className="form-actions">
+                                <button
+                                    className="button button--primary"
+                                    type="submit"
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Folyamatban...' : 'Regisztráció'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             )}
         </section>
     )

@@ -14,6 +14,42 @@ import {
     markTimeSlotAvailable,
 } from '../services/timeSlotService'
 
+const bookingHighlights = [
+    {
+        id: 1,
+        title: 'Gyors online foglalás',
+        text: 'Néhány kattintással kiválaszthatod a szolgáltatást és a szabad időpontot.',
+    },
+    {
+        id: 2,
+        title: 'Átlátható időtartam',
+        text: 'Minden szolgáltatásnál jól látható az időigény, így könnyebb tervezni.',
+    },
+    {
+        id: 3,
+        title: 'Kényelmes jegyzetmező',
+        text: 'Megadhatod, ha van referencia képed, külön kérésed vagy fontos tudnivaló.',
+    },
+]
+
+const bookingTips = [
+    {
+        id: 1,
+        title: 'Referencia kép',
+        text: 'Ha van konkrét elképzelésed, érdemes a megjegyzés mezőben jelezni vagy magaddal hozni a mintaképet.',
+    },
+    {
+        id: 2,
+        title: 'Pontosság',
+        text: 'Érdemes a lefoglalt időpont előtt néhány perccel megérkezni, hogy kényelmesen induljon az alkalom.',
+    },
+    {
+        id: 3,
+        title: 'Újrafoglalás',
+        text: 'Ha rendszeresen jársz, a következő időpontot is könnyebb előre betervezni.',
+    },
+]
+
 export default function BookingPage() {
     const { authUser, dbUser } = useAuth()
 
@@ -179,8 +215,8 @@ export default function BookingPage() {
     }
 
     const handleEditAppointment = (appointment) => {
-        if (!isAdmin && appointment.user_id !== dbUser?.id) {
-            setAppointmentError('Csak a saját foglalásodat szerkesztheted.')
+        if (!isAdmin) {
+            setAppointmentError('Csak admin szerkeszthet foglalást.')
             return
         }
 
@@ -237,8 +273,8 @@ export default function BookingPage() {
             }
 
             if (editingAppointment) {
-                if (!isAdmin && editingAppointment.user_id !== dbUser.id) {
-                    setAppointmentError('Csak a saját foglalásodat módosíthatod.')
+                if (!isAdmin) {
+                    setAppointmentError('Csak admin módosíthat foglalást.')
                     return
                 }
 
@@ -276,8 +312,8 @@ export default function BookingPage() {
     }
 
     const handleDeleteAppointment = async (appointment) => {
-        if (!isAdmin && appointment.user_id !== dbUser?.id) {
-            setAppointmentError('Csak a saját foglalásodat törölheted.')
+        if (!isAdmin) {
+            setAppointmentError('Csak admin törölhet foglalást.')
             return
         }
 
@@ -348,6 +384,15 @@ export default function BookingPage() {
                 {isAdmin && <span className="role-badge">Admin mód</span>}
             </div>
 
+            <div className="service-page-top-grid">
+                {bookingHighlights.map((item) => (
+                    <article className="service-page-info-card" key={item.id}>
+                        <h3>{item.title}</h3>
+                        <p className="service-page-note">{item.text}</p>
+                    </article>
+                ))}
+            </div>
+
             {appointmentError && (
                 <div className="alert alert--error">{appointmentError}</div>
             )}
@@ -359,11 +404,12 @@ export default function BookingPage() {
             {!isLoggedIn ? (
                 <>
                     <div className="panel">
-                        <h2>Bejelentkezés szükséges</h2>
-                        <p>
-                            Új foglalás létrehozásához jelentkezz be vagy regisztrálj a
-                            Fiók oldalon.
-                        </p>
+                        <div className="page-header">
+                            <h2>Bejelentkezés szükséges</h2>
+                            <p className="page-intro">
+                                Foglaláshoz jelentkezz be vagy hozz létre egy fiókot.
+                            </p>
+                        </div>
 
                         <div className="form-actions">
                             <Link to="/fiok" className="button button--primary">
@@ -375,22 +421,35 @@ export default function BookingPage() {
                         </div>
                     </div>
 
-                    <div className="panel booking-list-section">
-                        <h2>Hogyan működik a foglalás?</h2>
-                        <p>
-                            Először válassz egy szolgáltatást, majd jelentkezz be, és foglalj
-                            egy szabad időpontot.
-                        </p>
+                    <div className="panel">
+                        <div className="page-header">
+                            <h2>Hogyan működik?</h2>
+                        </div>
+
+                        <div className="service-page-bottom-grid">
+                            {bookingTips.map((item) => (
+                                <article className="service-page-info-card" key={item.id}>
+                                    <h3>{item.title}</h3>
+                                    <p className="service-page-note">{item.text}</p>
+                                </article>
+                            ))}
+                        </div>
                     </div>
                 </>
             ) : (
                 <>
                     <div className="panel">
-                        <h2>
-                            {editingAppointment
-                                ? 'Foglalás szerkesztése'
-                                : 'Új foglalás létrehozása'}
-                        </h2>
+                        <div className="page-header">
+                            <h2>
+                                {editingAppointment
+                                    ? 'Foglalás szerkesztése'
+                                    : 'Új foglalás létrehozása'}
+                            </h2>
+                            <p className="page-intro">
+                                Add meg az alapadatokat, válassz szolgáltatást és időpontot,
+                                majd küldd el a foglalásodat.
+                            </p>
+                        </div>
 
                         <form className="app-form" onSubmit={handleAppointmentSubmit}>
                             <div className="form-grid">
@@ -511,6 +570,7 @@ export default function BookingPage() {
                                         rows="4"
                                         value={appointmentFormData.notes}
                                         onChange={handleAppointmentChange}
+                                        placeholder="Ide írhatod, ha van referencia képed, külön kérésed vagy fontos tudnivaló."
                                     />
                                 </div>
                             </div>
@@ -524,11 +584,11 @@ export default function BookingPage() {
                                     {appointmentSubmitting
                                         ? 'Mentés...'
                                         : editingAppointment
-                                          ? 'Foglalás mentése'
-                                          : 'Foglalás létrehozása'}
+                                            ? 'Foglalás mentése'
+                                            : 'Foglalás létrehozása'}
                                 </button>
 
-                                {editingAppointment && (
+                                {editingAppointment && isAdmin && (
                                     <button
                                         className="button button--secondary"
                                         type="button"
@@ -541,10 +601,15 @@ export default function BookingPage() {
                         </form>
                     </div>
 
-                    <div className="panel booking-list-section">
-                        <h2>
-                            {isAdmin ? 'Összes foglalás' : 'Saját foglalásaim'}
-                        </h2>
+                    <div className="panel">
+                        <div className="page-header">
+                            <h2>{isAdmin ? 'Összes foglalás' : 'Saját foglalásaim'}</h2>
+                            <p className="page-intro">
+                                {isAdmin
+                                    ? 'Itt láthatod és kezelheted az összes beérkezett foglalást.'
+                                    : 'Itt látod a saját foglalásaidat egy helyen.'}
+                            </p>
+                        </div>
 
                         {visibleAppointments.length === 0 ? (
                             <div className="empty-state">
@@ -596,30 +661,49 @@ export default function BookingPage() {
                                         )}
 
                                         <div className="card-actions">
-                                            <button
-                                                className="button button--secondary"
-                                                type="button"
-                                                onClick={() =>
-                                                    handleEditAppointment(appointment)
-                                                }
-                                            >
-                                                Szerkesztés
-                                            </button>
+                                            {isAdmin && (
+                                                <button
+                                                    className="button button--secondary"
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleEditAppointment(appointment)
+                                                    }
+                                                >
+                                                    Szerkesztés
+                                                </button>
+                                            )}
 
-                                            <button
-                                                className="button button--secondary"
-                                                type="button"
-                                                onClick={() =>
-                                                    handleDeleteAppointment(appointment)
-                                                }
-                                            >
-                                                Törlés
-                                            </button>
+                                            {isAdmin && (
+                                                <button
+                                                    className="button button--secondary"
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleDeleteAppointment(appointment)
+                                                    }
+                                                >
+                                                    Törlés
+                                                </button>
+                                            )}
                                         </div>
                                     </article>
                                 ))}
                             </div>
                         )}
+                    </div>
+
+                    <div className="panel">
+                        <div className="page-header">
+                            <h2>Hasznos tudnivalók</h2>
+                        </div>
+
+                        <div className="service-page-bottom-grid">
+                            {bookingTips.map((item) => (
+                                <article className="service-page-info-card" key={item.id}>
+                                    <h3>{item.title}</h3>
+                                    <p className="service-page-note">{item.text}</p>
+                                </article>
+                            ))}
+                        </div>
                     </div>
                 </>
             )}

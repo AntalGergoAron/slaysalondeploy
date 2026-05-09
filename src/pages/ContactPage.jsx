@@ -1,20 +1,66 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
     createContactMessage,
     getAllContactMessages,
 } from '../services/contactMessageService'
 
+const contactHighlights = [
+    {
+        id: 1,
+        title: 'Gyors válasz',
+        text: 'Ha kérdésed van szolgáltatással vagy időponttal kapcsolatban, üzenetben is felveheted a kapcsolatot.',
+    },
+    {
+        id: 2,
+        title: 'Egyedi igények',
+        text: 'Nyugodtan írj, ha külön elképzelésed, referencia képed vagy speciális kérésed van.',
+    },
+    {
+        id: 3,
+        title: 'Foglalásbarát oldal',
+        text: 'A kapcsolat oldal mellett közvetlenül a foglalási oldalra is tovább tudsz lépni.',
+    },
+]
+
+const openingHours = [
+    { id: 1, day: 'Hétfő', value: '09:00 – 17:00' },
+    { id: 2, day: 'Kedd', value: '09:00 – 17:00' },
+    { id: 3, day: 'Szerda', value: '09:00 – 17:00' },
+    { id: 4, day: 'Csütörtök', value: '10:00 – 18:00' },
+    { id: 5, day: 'Péntek', value: '10:00 – 16:00' },
+    { id: 6, day: 'Szombat', value: 'Előzetes egyeztetéssel' },
+    { id: 7, day: 'Vasárnap', value: 'Zárva' },
+]
+
+const faqItems = [
+    {
+        id: 1,
+        question: 'Mikor érdemes inkább üzenetet írni?',
+        answer: 'Ha egyedi elképzelésed van, referencia képet küldenél, vagy nem vagy biztos benne, melyik szolgáltatás illik hozzád a legjobban.',
+    },
+    {
+        id: 2,
+        question: 'Telefonon vagy üzenetben gyorsabb?',
+        answer: 'Általában mindkét út működik, de az üzenet kényelmesebb lehet, ha részletesebb kérdésed van.',
+    },
+    {
+        id: 3,
+        question: 'Lehet időpontot kérni kapcsolatfelvételen keresztül is?',
+        answer: 'Igen, de a leggyorsabb és legátláthatóbb megoldás továbbra is az online foglalási oldal.',
+    },
+]
+
 export default function ContactPage() {
     const { dbUser } = useAuth()
 
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: '',
-    })
+    const [messages, setMessages] = useState([])
+    const [loadingMessages, setLoadingMessages] = useState(false)
+
+    const [submitting, setSubmitting] = useState(false)
+    const [formError, setFormError] = useState('')
+    const [formSuccess, setFormSuccess] = useState('')
 
     const [fieldErrors, setFieldErrors] = useState({
         name: '',
@@ -23,31 +69,36 @@ export default function ContactPage() {
         message: '',
     })
 
-    const [submitting, setSubmitting] = useState(false)
-    const [formError, setFormError] = useState('')
-    const [formSuccess, setFormSuccess] = useState('')
-
-    const [messages, setMessages] = useState([])
-    const [messagesLoading, setMessagesLoading] = useState(false)
-    const [messagesError, setMessagesError] = useState('')
+    const [formData, setFormData] = useState({
+        name: dbUser?.full_name || '',
+        email: dbUser?.email || '',
+        phone: dbUser?.phone || '',
+        subject: '',
+        message: '',
+    })
 
     const isAdmin = dbUser?.role === 'admin'
 
+    useEffect(() => {
+        setFormData((prev) => ({
+            ...prev,
+            name: dbUser?.full_name || prev.name,
+            email: dbUser?.email || prev.email,
+            phone: dbUser?.phone || prev.phone,
+        }))
+    }, [dbUser])
+
     const loadMessages = async () => {
-        if (!isAdmin) {
-            return
-        }
+        if (!isAdmin) return
 
         try {
-            setMessagesLoading(true)
-            setMessagesError('')
-
+            setLoadingMessages(true)
             const data = await getAllContactMessages()
             setMessages(data)
         } catch (err) {
-            setMessagesError(err.message)
+            setFormError(err.message)
         } finally {
-            setMessagesLoading(false)
+            setLoadingMessages(false)
         }
     }
 
@@ -55,23 +106,21 @@ export default function ContactPage() {
         loadMessages()
     }, [isAdmin])
 
-    const sortedMessages = useMemo(() => {
-        const result = [...messages]
+    const handleChange = (event) => {
+        const { name, value } = event.target
 
-        result.sort((a, b) => {
-            if (a.created_at && b.created_at) {
-                return new Date(b.created_at) - new Date(a.created_at)
-            }
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }))
 
-            if (typeof a.id === 'number' && typeof b.id === 'number') {
-                return b.id - a.id
-            }
-
-            return 0
-        })
-
-        return result
-    }, [messages])
+        if (fieldErrors[name]) {
+            setFieldErrors((prev) => ({
+                ...prev,
+                [name]: '',
+            }))
+        }
+    }
 
     const validateForm = () => {
         const errors = {
@@ -101,35 +150,15 @@ export default function ContactPage() {
 
         if (!trimmedSubject) {
             errors.subject = 'A tárgy megadása kötelező.'
-        } else if (trimmedSubject.length < 3) {
-            errors.subject = 'A tárgy legyen legalább 3 karakter hosszú.'
         }
 
         if (!trimmedMessage) {
             errors.message = 'Az üzenet megadása kötelező.'
-        } else if (trimmedMessage.length < 10) {
-            errors.message = 'Az üzenet legyen legalább 10 karakter hosszú.'
         }
 
         setFieldErrors(errors)
 
         return !errors.name && !errors.email && !errors.subject && !errors.message
-    }
-
-    const handleChange = (event) => {
-        const { name, value } = event.target
-
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }))
-
-        if (fieldErrors[name]) {
-            setFieldErrors((prev) => ({
-                ...prev,
-                [name]: '',
-            }))
-        }
     }
 
     const handleSubmit = async (event) => {
@@ -139,6 +168,7 @@ export default function ContactPage() {
         setFormSuccess('')
 
         if (!validateForm()) {
+            setFormError('Kérlek javítsd a hibás mezőket.')
             return
         }
 
@@ -153,19 +183,11 @@ export default function ContactPage() {
                 message: formData.message.trim(),
             })
 
-            setFormSuccess('Az üzenetedet sikeresen elküldtük. Hamarosan felvesszük veled a kapcsolatot.')
-
+            setFormSuccess('Az üzenetedet sikeresen elküldtük.')
             setFormData({
-                name: '',
-                email: '',
-                phone: '',
-                subject: '',
-                message: '',
-            })
-
-            setFieldErrors({
-                name: '',
-                email: '',
+                name: dbUser?.full_name || '',
+                email: dbUser?.email || '',
+                phone: dbUser?.phone || '',
                 subject: '',
                 message: '',
             })
@@ -185,32 +207,77 @@ export default function ContactPage() {
             <div className="page-header">
                 <h1>Kapcsolat</h1>
                 <p className="page-intro">
-                    Kérdésed van egy szolgáltatással, időponttal vagy egyedi igénnyel kapcsolatban?
-                    Küldj üzenetet, és visszajelzünk.
-                </p>
-                {isAdmin && <span className="role-badge">Admin mód</span>}
-            </div>
-
-            <div className="panel">
-                <h2>Elérhetőségek</h2>
-                <p>
-                    <strong>Cím:</strong> 6720 Szeged, Példa utca 12.
-                </p>
-                <p>
-                    <strong>Telefon:</strong> +36 30 123 4567
-                </p>
-                <p>
-                    <strong>Email:</strong> info@slaysalon.hu
+                    Kérdésed van egy szolgáltatással, időponttal vagy egyedi igénnyel
+                    kapcsolatban? Küldj üzenetet, és visszajelzünk.
                 </p>
             </div>
 
+            <div className="service-page-top-grid">
+                {contactHighlights.map((item) => (
+                    <article className="service-page-info-card" key={item.id}>
+                        <h3>{item.title}</h3>
+                        <p className="service-page-note">{item.text}</p>
+                    </article>
+                ))}
+            </div>
+
+            {formError && <div className="alert alert--error">{formError}</div>}
+            {formSuccess && <div className="alert alert--success">{formSuccess}</div>}
+
             <div className="panel">
-                <h2>Üzenet küldése</h2>
+                <div className="page-header">
+                    <h2>Elérhetőségek</h2>
+                    <p className="page-intro">
+                        Ha gyorsabban szeretnél időpontot foglalni, a foglalási oldalon közvetlenül
+                        is el tudod intézni.
+                    </p>
+                </div>
 
-                {formError && <div className="alert alert--error">{formError}</div>}
-                {formSuccess && <div className="alert alert--success">{formSuccess}</div>}
+                <div className="service-page-bottom-grid">
+                    <article className="service-page-info-card">
+                        <h3>Kapcsolati adatok</h3>
+                        <p><strong>Cím:</strong> 6720 Szeged, Példa utca 12.</p>
+                        <p><strong>Telefon:</strong> +36 30 123 4567</p>
+                        <p><strong>Email:</strong> info@slaysalon.hu</p>
+                        <p><strong>Instagram:</strong> @slaysalon.hu</p>
+                    </article>
 
-                <form className="app-form" onSubmit={handleSubmit} noValidate>
+                    <article className="service-page-info-card">
+                        <h3>Nyitvatartás</h3>
+                        {openingHours.map((item) => (
+                            <p key={item.id}>
+                                <strong>{item.day}:</strong> {item.value}
+                            </p>
+                        ))}
+                    </article>
+
+                    <article className="service-page-info-card">
+                        <h3>Gyors műveletek</h3>
+                        <p className="service-page-note">
+                            Ha már tudod, mit szeretnél, a leggyorsabb út az online foglalás.
+                        </p>
+
+                        <div className="form-actions" style={{ marginTop: '1rem' }}>
+                            <Link to="/foglalas" className="button button--primary">
+                                Időpont foglalása
+                            </Link>
+                            <Link to="/szolgaltatasok" className="button button--secondary">
+                                Szolgáltatások
+                            </Link>
+                        </div>
+                    </article>
+                </div>
+            </div>
+
+            <div className="panel">
+                <div className="page-header">
+                    <h2>Üzenet küldése</h2>
+                    <p className="page-intro">
+                        Írj bátran, ha nem vagy biztos a választásban, vagy egyedi kérdésed van.
+                    </p>
+                </div>
+
+                <form className="app-form" onSubmit={handleSubmit}>
                     <div className="form-grid">
                         <div className="form-field">
                             <label htmlFor="name">Név</label>
@@ -220,7 +287,6 @@ export default function ContactPage() {
                                 type="text"
                                 value={formData.name}
                                 onChange={handleChange}
-                                aria-invalid={!!fieldErrors.name}
                             />
                             {fieldErrors.name && (
                                 <p className="field-error">{fieldErrors.name}</p>
@@ -235,7 +301,6 @@ export default function ContactPage() {
                                 type="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                aria-invalid={!!fieldErrors.email}
                             />
                             {fieldErrors.email && (
                                 <p className="field-error">{fieldErrors.email}</p>
@@ -262,8 +327,7 @@ export default function ContactPage() {
                                 type="text"
                                 value={formData.subject}
                                 onChange={handleChange}
-                                aria-invalid={!!fieldErrors.subject}
-                                placeholder="Pl. Időpont érdeklődés"
+                                placeholder="Pl. időpont érdeklődés"
                             />
                             {fieldErrors.subject && (
                                 <p className="field-error">{fieldErrors.subject}</p>
@@ -275,10 +339,9 @@ export default function ContactPage() {
                             <textarea
                                 id="message"
                                 name="message"
-                                rows="5"
+                                rows="6"
                                 value={formData.message}
                                 onChange={handleChange}
-                                aria-invalid={!!fieldErrors.message}
                             />
                             {fieldErrors.message && (
                                 <p className="field-error">{fieldErrors.message}</p>
@@ -298,46 +361,44 @@ export default function ContactPage() {
                 </form>
             </div>
 
+            <div className="panel">
+                <div className="page-header">
+                    <h2>Gyakori kérdések</h2>
+                </div>
+
+                <div className="service-page-bottom-grid">
+                    {faqItems.map((item) => (
+                        <article className="service-page-info-card" key={item.id}>
+                            <h3>{item.question}</h3>
+                            <p className="service-page-note">{item.answer}</p>
+                        </article>
+                    ))}
+                </div>
+            </div>
+
             {isAdmin && (
-                <div className="booking-list-section">
-                    <h2>Beérkezett üzenetek</h2>
+                <div className="panel">
+                    <div className="page-header">
+                        <h2>Beérkezett üzenetek</h2>
+                        <p className="page-intro">
+                            Admin nézetben itt láthatod a kapcsolatfelvételi űrlap beérkezett
+                            üzeneteit.
+                        </p>
+                    </div>
 
-                    {messagesError && (
-                        <div className="alert alert--error">{messagesError}</div>
-                    )}
-
-                    {messagesLoading ? (
-                        <p>Üzenetek betöltése...</p>
-                    ) : sortedMessages.length === 0 ? (
-                        <div className="empty-state">
-                            Még nincs beérkezett üzenet.
-                        </div>
+                    {loadingMessages ? (
+                        <p>Betöltés...</p>
+                    ) : messages.length === 0 ? (
+                        <div className="empty-state">Még nincs beérkezett üzenet.</div>
                     ) : (
                         <div className="booking-list">
-                            {sortedMessages.map((item) => (
-                                <article
-                                    className="booking-card"
-                                    key={item.id ?? `${item.email}-${item.message}`}
-                                >
-                                    <h3>{item.name || 'Névtelen üzenet'}</h3>
-                                    <p>
-                                        <strong>Email:</strong> {item.email || '-'}
-                                    </p>
-                                    <p>
-                                        <strong>Telefon:</strong> {item.phone || '-'}
-                                    </p>
-                                    <p>
-                                        <strong>Tárgy:</strong> {item.subject || '-'}
-                                    </p>
-                                    {item.created_at && (
-                                        <p>
-                                            <strong>Érkezett:</strong>{' '}
-                                            {new Date(item.created_at).toLocaleString('hu-HU')}
-                                        </p>
-                                    )}
-                                    <p>
-                                        <strong>Üzenet:</strong> {item.message || '-'}
-                                    </p>
+                            {messages.map((message) => (
+                                <article className="booking-card" key={message.id}>
+                                    <h3>{message.subject}</h3>
+                                    <p><strong>Név:</strong> {message.name}</p>
+                                    <p><strong>Email:</strong> {message.email}</p>
+                                    <p><strong>Telefon:</strong> {message.phone || '-'}</p>
+                                    <p><strong>Üzenet:</strong> {message.message}</p>
                                 </article>
                             ))}
                         </div>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
     getAllServices,
@@ -6,6 +7,60 @@ import {
     updateService,
     deleteService,
 } from '../services/serviceService'
+
+const featuredOptions = [
+    {
+        id: 1,
+        title: 'Személyre szabott megoldások',
+        text: 'Letisztult, elegáns és alkalmi stílusok közül is választhatsz, attól függően, hogy hétköznapra vagy különleges alkalomra keresel megoldást.',
+    },
+    {
+        id: 2,
+        title: 'Átlátható foglalás',
+        text: 'A szolgáltatások között könnyen kereshetsz, össze tudod hasonlítani az árakat és időtartamokat, majd gyorsan foglalhatsz.',
+    },
+    {
+        id: 3,
+        title: 'Kényelmes online ügyintézés',
+        text: 'Néhány kattintással megtalálhatod a számodra megfelelő szolgáltatást és időpontot, anélkül hogy külön egyeztetned kellene.',
+    },
+]
+
+const popularChoices = [
+    {
+        id: 1,
+        title: 'Első alkalomra',
+        text: 'Ha most jössz először, érdemes egyszerűbb, kényelmesen viselhető megoldással kezdeni, amit könnyű megszokni a hétköznapokban is.',
+    },
+    {
+        id: 2,
+        title: 'Alkalmi megjelenéshez',
+        text: 'Ha eseményre, ünnepre vagy fotózásra készülsz, a díszítettebb, hangsúlyosabb stílusok látványosabb összhatást adnak.',
+    },
+    {
+        id: 3,
+        title: 'Tartós hétköznapi viselethez',
+        text: 'Ha fontos a praktikum és a tartósság, válassz olyan szolgáltatást, amely hosszabb ideig szép marad a mindennapi használat mellett is.',
+    },
+]
+
+const faqItems = [
+    {
+        id: 1,
+        question: 'Mennyi idővel számoljak?',
+        answer: 'A választott szolgáltatástól függően általában 30–120 perc közötti idővel érdemes számolni.',
+    },
+    {
+        id: 2,
+        question: 'Lehet referencia képet hozni?',
+        answer: 'Igen, ez sokat segít abban, hogy a kívánt stílus és színvilág minél pontosabban megvalósuljon.',
+    },
+    {
+        id: 3,
+        question: 'Mikor érdemes új időpontot foglalni?',
+        answer: 'Általában 3–4 hetente ajánlott, de ez a köröm növekedésétől és a választott típustól is függhet.',
+    },
+]
 
 export default function ServicesPage() {
     const { dbUser } = useAuth()
@@ -172,16 +227,7 @@ export default function ServicesPage() {
             setServiceSuccess('A szolgáltatás sikeresen törölve lett.')
             await loadServices()
         } catch (err) {
-            if (
-                err.message.includes('foreign key constraint') ||
-                err.message.includes('appointments_service_id_fkey')
-            ) {
-                setServiceError(
-                    'Ez a szolgáltatás nem törölhető, mert már tartozik hozzá foglalás.'
-                )
-            } else {
-                setServiceError(err.message)
-            }
+            setServiceError(err.message)
         }
     }
 
@@ -234,33 +280,19 @@ export default function ServicesPage() {
             <div className="page-header">
                 <h1>Szolgáltatások</h1>
                 <p className="page-intro">
-                    Böngéssz a szolgáltatások között, hasonlítsd össze az árakat és időtartamokat,
-                    majd válaszd ki a hozzád legjobban illő opciót.
+                    Böngéssz a szolgáltatások között, hasonlítsd össze az árakat és
+                    időtartamokat, majd válaszd ki a hozzád legjobban illő opciót.
                 </p>
                 {isAdmin && <span className="role-badge">Admin mód</span>}
             </div>
 
             <div className="service-page-top-grid">
-                <article className="service-page-info-card">
-                    <h3>Személyre szabott megoldások</h3>
-                    <p className="service-page-note">
-                        Letisztult, elegáns és alkalmi stílusok közül is választhatsz.
-                    </p>
-                </article>
-
-                <article className="service-page-info-card">
-                    <h3>Átlátható foglalás</h3>
-                    <p className="service-page-note">
-                        A szolgáltatások között könnyen kereshetsz és gyorsan foglalhatsz.
-                    </p>
-                </article>
-
-                <article className="service-page-info-card">
-                    <h3>Kényelmes online ügyintézés</h3>
-                    <p className="service-page-note">
-                        Néhány kattintással megtalálhatod a számodra megfelelő időpontot.
-                    </p>
-                </article>
+                {featuredOptions.map((item) => (
+                    <article className="service-page-info-card" key={item.id}>
+                        <h3>{item.title}</h3>
+                        <p className="service-page-note">{item.text}</p>
+                    </article>
+                ))}
             </div>
 
             {serviceError && <div className="alert alert--error">{serviceError}</div>}
@@ -470,30 +502,82 @@ export default function ServicesPage() {
                 </div>
             )}
 
-            <div className="service-page-bottom-grid">
-                <article className="service-page-info-card">
-                    <h3>Mire figyelj foglalás előtt?</h3>
-                    <p className="service-page-note">
-                        Ha van elképzelésed vagy referencia képed, érdemes magaddal hozni,
-                        így könnyebb a számodra legjobb stílust kiválasztani.
+            <div className="panel">
+                <div className="page-header">
+                    <h2>Népszerű választások</h2>
+                    <p className="page-intro">
+                        Segít eldönteni, melyik szolgáltatás lehet a legjobb választás a
+                        stílusodhoz, alkalomhoz és elvárásaidhoz.
                     </p>
-                </article>
+                </div>
 
-                <article className="service-page-info-card">
-                    <h3>Mennyi idővel érdemes számolni?</h3>
-                    <p className="service-page-note">
-                        A pontos időtartam a választott szolgáltatástól függ, ezért a listában
-                        minden tételnél külön feltüntettük.
-                    </p>
-                </article>
+                <div className="service-page-bottom-grid">
+                    {popularChoices.map((item) => (
+                        <article className="service-page-info-card" key={item.id}>
+                            <h3>{item.title}</h3>
+                            <p className="service-page-note">{item.text}</p>
+                        </article>
+                    ))}
+                </div>
+            </div>
 
-                <article className="service-page-info-card">
-                    <h3>Nem találod, amit keresel?</h3>
-                    <p className="service-page-note">
-                        Nézd meg a kapcsolat oldalt, vagy írj üzenetet, és segítünk a megfelelő
-                        szolgáltatás kiválasztásában.
+            <div className="panel">
+                <div className="page-header">
+                    <h2>Foglalás előtt</h2>
+                    <p className="page-intro">
+                        Néhány hasznos információ, ami segít a választásban és a felkészülésben.
                     </p>
-                </article>
+                </div>
+
+                <div className="service-page-bottom-grid">
+                    <article className="service-page-info-card">
+                        <h3>Mire figyelj foglalás előtt?</h3>
+                        <p className="service-page-note">
+                            Ha van elképzelésed vagy referencia képed, érdemes magaddal hozni,
+                            így könnyebb a számodra legjobb stílust kiválasztani.
+                        </p>
+                    </article>
+
+                    <article className="service-page-info-card">
+                        <h3>Mennyi idővel érdemes számolni?</h3>
+                        <p className="service-page-note">
+                            A pontos időtartam a választott szolgáltatástól függ, ezért a listában
+                            minden tételnél külön feltüntettük.
+                        </p>
+                    </article>
+
+                    <article className="service-page-info-card">
+                        <h3>Nem találod, amit keresel?</h3>
+                        <p className="service-page-note">
+                            Nézd meg a kapcsolat oldalt, vagy írj üzenetet, és segítünk a megfelelő
+                            szolgáltatás kiválasztásában.
+                        </p>
+                    </article>
+                </div>
+
+                <div className="form-actions" style={{ marginTop: '1rem' }}>
+                    <Link to="/foglalas" className="button button--primary">
+                        Időpont foglalása
+                    </Link>
+                    <Link to="/kapcsolat" className="button button--secondary">
+                        Kapcsolat
+                    </Link>
+                </div>
+            </div>
+
+            <div className="panel">
+                <div className="page-header">
+                    <h2>Gyakori kérdések</h2>
+                </div>
+
+                <div className="service-page-bottom-grid">
+                    {faqItems.map((item) => (
+                        <article className="service-page-info-card" key={item.id}>
+                            <h3>{item.question}</h3>
+                            <p className="service-page-note">{item.answer}</p>
+                        </article>
+                    ))}
+                </div>
             </div>
         </section>
     )
